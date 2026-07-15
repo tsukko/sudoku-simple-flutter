@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:vibration/vibration.dart';
 import 'models/sudoku_level.dart';
 import 'services/game_service.dart';
 import 'services/settings_service.dart';
@@ -32,6 +33,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin {
   Timer? _timer;
   bool _isGameOver = false;
   bool _isLoading = true;
+  bool _vibrationEnabled = true;
 
   late AnimationController _shakeController;
 
@@ -48,12 +50,14 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin {
   Future<void> _initGame() async {
     final hintLimit = await SettingsService.getHintLimit();
     final lifeLimit = await SettingsService.getLifeLimit();
+    final vibration = await SettingsService.isVibrationEnabled();
 
     setState(() {
       _initialGrid = widget.level.initialGrid;
       _solutionGrid = widget.level.solutionGrid;
       _maxErrors = lifeLimit == 0 ? 999 : lifeLimit;
       _initialHintLimit = hintLimit;
+      _vibrationEnabled = vibration;
 
       if (widget.savedProgress != null) {
         _currentGrid = widget.savedProgress!['grid'];
@@ -161,8 +165,11 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin {
     _autoSave();
   }
 
-  void _shakeScreen() {
+  void _shakeScreen() async {
     _shakeController.forward(from: 0.0);
+    if (_vibrationEnabled && await Vibration.hasVibrator() == true) {
+      Vibration.vibrate(duration: 100);
+    }
   }
 
   void _useHint() {

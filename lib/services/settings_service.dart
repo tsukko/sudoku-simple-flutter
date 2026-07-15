@@ -4,6 +4,18 @@ class SettingsService {
   static const String _hintLimitKey = 'setting_hint_limit';
   static const String _lifeLimitKey = 'setting_life_limit';
   static const String _unlockAllKey = 'setting_unlock_all';
+  static const String _vibrationEnabledKey = 'setting_vibration_enabled';
+
+  // バイブレーション設定
+  static Future<bool> isVibrationEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_vibrationEnabledKey) ?? true;
+  }
+
+  static Future<void> setVibrationEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_vibrationEnabledKey, value);
+  }
 
   // ヒント設定 (0は無制限)
   static Future<int> getHintLimit() async {

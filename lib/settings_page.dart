@@ -12,6 +12,7 @@ class _SettingsPageState extends State<SettingsPage> {
   int _hintLimit = 3;
   int _lifeLimit = 5;
   bool _unlockAll = false;
+  bool _vibrationEnabled = true;
 
   @override
   void initState() {
@@ -23,10 +24,12 @@ class _SettingsPageState extends State<SettingsPage> {
     final hint = await SettingsService.getHintLimit();
     final life = await SettingsService.getLifeLimit();
     final unlock = await SettingsService.isUnlockAll();
+    final vibration = await SettingsService.isVibrationEnabled();
     setState(() {
       _hintLimit = hint;
       _lifeLimit = life;
       _unlockAll = unlock;
+      _vibrationEnabled = vibration;
     });
   }
 
@@ -79,6 +82,16 @@ class _SettingsPageState extends State<SettingsPage> {
             value: _unlockAll,
             onChanged: (val) async {
               await SettingsService.setUnlockAll(val);
+              _loadSettings();
+            },
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('バイブレーション'),
+            subtitle: const Text('ミスした時に端末を振動させます'),
+            value: _vibrationEnabled,
+            onChanged: (val) async {
+              await SettingsService.setVibrationEnabled(val);
               _loadSettings();
             },
           ),
