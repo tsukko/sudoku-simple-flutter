@@ -1,0 +1,89 @@
+import 'package:flutter/material.dart';
+import 'services/settings_service.dart';
+
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  int _hintLimit = 3;
+  int _lifeLimit = 5;
+  bool _unlockAll = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final hint = await SettingsService.getHintLimit();
+    final life = await SettingsService.getLifeLimit();
+    final unlock = await SettingsService.isUnlockAll();
+    setState(() {
+      _hintLimit = hint;
+      _lifeLimit = life;
+      _unlockAll = unlock;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('設定')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          ListTile(
+            title: const Text('ヒント上限数'),
+            subtitle: Text(_hintLimit == 0 ? '無制限' : '$_hintLimit 回'),
+            trailing: DropdownButton<int>(
+              value: _hintLimit,
+              items: [0, 1, 3, 5, 10].map((e) => DropdownMenuItem(
+                value: e, 
+                child: Text(e == 0 ? '無制限' : e.toString()),
+              )).toList(),
+              onChanged: (val) async {
+                if (val != null) {
+                  await SettingsService.setHintLimit(val);
+                  _loadSettings();
+                }
+              },
+            ),
+          ),
+          const Divider(),
+          ListTile(
+            title: const Text('ライフ（ミス制限）'),
+            subtitle: Text(_lifeLimit == 0 ? '無制限' : '$_lifeLimit 回'),
+            trailing: DropdownButton<int>(
+              value: _lifeLimit,
+              items: [0, 1, 3, 5, 10].map((e) => DropdownMenuItem(
+                value: e, 
+                child: Text(e == 0 ? '無制限' : e.toString()),
+              )).toList(),
+              onChanged: (val) async {
+                if (val != null) {
+                  await SettingsService.setLifeLimit(val);
+                  _loadSettings();
+                }
+              },
+            ),
+          ),
+          const Divider(),
+          SwitchListTile(
+            title: const Text('全レベル解放'),
+            subtitle: const Text('クリア状況に関わらず全てのレベルを選択可能にします'),
+            value: _unlockAll,
+            onChanged: (val) async {
+              await SettingsService.setUnlockAll(val);
+              _loadSettings();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
