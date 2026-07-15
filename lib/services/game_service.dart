@@ -4,6 +4,31 @@ import 'package:shared_preferences/shared_preferences.dart';
 class GameService {
   static const String _unlockedLevelKey = 'unlocked_level';
   static const String _progressPrefix = 'progress_';
+  static const String _totalXpKey = 'total_xp';
+
+  // XPを取得
+  static Future<int> getTotalXp() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_totalXpKey) ?? 0;
+  }
+
+  // XPを加算
+  static Future<void> addXp(int amount) async {
+    final prefs = await SharedPreferences.getInstance();
+    int currentXp = await getTotalXp();
+    await prefs.setInt(_totalXpKey, currentXp + amount);
+  }
+
+  // 段位を取得
+  static String getRank(int xp) {
+    if (xp >= 5000) return '最高段位：数独聖人';
+    if (xp >= 2000) return '九段：数独名人';
+    if (xp >= 1000) return '五段：数独達人';
+    if (xp >= 500) return '初段：数独師範';
+    if (xp >= 200) return '三級：数独熟練';
+    if (xp >= 50) return '七級：数独初級';
+    return '十級：数独見習い';
+  }
 
   // 解放されている最大レベルを取得 (デフォルトは1)
   static Future<int> getUnlockedLevel() async {

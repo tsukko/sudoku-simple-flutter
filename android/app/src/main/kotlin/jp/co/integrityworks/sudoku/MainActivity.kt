@@ -1,4 +1,4 @@
-package jp.co.integrityworks.sudoku_simple
+package jp.co.integrityworks.sudoku
 
 import io.flutter.embedding.android.FlutterActivity
 

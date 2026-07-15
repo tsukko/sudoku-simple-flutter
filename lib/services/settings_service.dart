@@ -5,6 +5,18 @@ class SettingsService {
   static const String _lifeLimitKey = 'setting_life_limit';
   static const String _unlockAllKey = 'setting_unlock_all';
   static const String _vibrationEnabledKey = 'setting_vibration_enabled';
+  static const String _bgmEnabledKey = 'setting_bgm_enabled';
+
+  // BGM設定
+  static Future<bool> isBgmEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_bgmEnabledKey) ?? true;
+  }
+
+  static Future<void> setBgmEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_bgmEnabledKey, value);
+  }
 
   // バイブレーション設定
   static Future<bool> isVibrationEnabled() async {

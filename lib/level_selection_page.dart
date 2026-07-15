@@ -17,6 +17,11 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
   bool _unlockAll = false;
   bool _isLoading = true;
 
+  // 和風カラーパレット
+  static const Color tokiwa = Color(0xFF2D5A27); // 常盤色
+  static const Color kurumi = Color(0xFF5D4037); // 胡桃色
+  static const Color washi = Color(0xFFF7F1E3);  // 和紙
+
   @override
   void initState() {
     super.initState();
@@ -48,12 +53,14 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_isLoading) return const Scaffold(backgroundColor: washi, body: Center(child: CircularProgressIndicator(color: tokiwa)));
 
     return Scaffold(
+      backgroundColor: washi,
       appBar: AppBar(
-        title: const Text('レベル選択'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('レベル選択', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: tokiwa,
+        foregroundColor: Colors.white,
       ),
       body: GridView.builder(
         padding: const EdgeInsets.all(20),
@@ -71,8 +78,13 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
           return ElevatedButton(
             onPressed: isLocked ? null : () => _handleLevelTap(context, level),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isLocked ? Colors.grey[300] : null,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              backgroundColor: isLocked ? Colors.grey[300] : Colors.white,
+              foregroundColor: tokiwa,
+              elevation: isLocked ? 0 : 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+                side: BorderSide(color: isLocked ? Colors.transparent : tokiwa.withOpacity(0.5)),
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -83,11 +95,11 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                     Text('レベル ${level.id}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     if (isLocked) ...[
                       const SizedBox(width: 8),
-                      const Icon(Icons.lock, size: 20),
+                      const Icon(Icons.lock, size: 20, color: kurumi),
                     ]
                   ],
                 ),
-                Text(_getDifficultyName(level.difficulty), style: const TextStyle(fontSize: 14)),
+                Text(_getDifficultyName(level.difficulty), style: TextStyle(fontSize: 14, color: isLocked ? Colors.grey : kurumi)),
               ],
             ),
           );
@@ -98,7 +110,6 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
 
   Future<void> _handleLevelTap(BuildContext context, SudokuLevel level) async {
     final progress = await GameService.loadProgress(level.id);
-
     if (!mounted) return;
     if (progress == null) {
       _startGame(context, level, null);
@@ -110,17 +121,18 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
   void _showStartOptions(BuildContext context, SudokuLevel level, Map<String, dynamic> progress) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: washi,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('レベル ${level.id}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text('レベル ${level.id}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: tokiwa)),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.play_arrow, color: Colors.blue),
-              title: const Text('最初からスタート'),
+              leading: const Icon(Icons.play_arrow, color: tokiwa),
+              title: const Text('最初からスタート', style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () async {
                 Navigator.pop(context);
                 await GameService.clearProgress(level.id);
@@ -129,8 +141,8 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.restore, color: Colors.orange),
-              title: const Text('途中からスタート'),
+              leading: const Icon(Icons.restore, color: kurumi),
+              title: const Text('途中からスタート', style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text('経過時間: ${_formatTime(progress['seconds'])}'),
               onTap: () {
                 Navigator.pop(context);
