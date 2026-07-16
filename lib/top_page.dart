@@ -5,6 +5,7 @@ import 'sudoku_page.dart';
 import 'settings_page.dart';
 import 'utils/sudoku_generator.dart';
 import 'services/game_service.dart';
+import 'l10n.dart';
 
 class TopPage extends StatefulWidget {
   const TopPage({super.key});
@@ -15,7 +16,7 @@ class TopPage extends StatefulWidget {
 
 class _TopPageState extends State<TopPage> {
   int _xp = 0;
-  String _rank = '十級：数独見習い';
+  String _rank = L10n.rank10;
 
   // 和風カラーパレット
   static const Color tokiwa = Color(0xFF2D5A27); // 常盤色
@@ -41,7 +42,7 @@ class _TopPageState extends State<TopPage> {
     return Scaffold(
       backgroundColor: washi,
       appBar: AppBar(
-        title: const Text('和風数独：心和むナンプレ', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('${L10n.appTitle}：${L10n.appSubtitle}', style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: tokiwa,
         foregroundColor: Colors.white,
         actions: [
@@ -70,7 +71,7 @@ class _TopPageState extends State<TopPage> {
                 children: [
                   Text(_rank, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: tokiwa)),
                   const SizedBox(height: 5),
-                  Text('現在の経験値: $_xp', style: const TextStyle(fontSize: 14, color: kurumi)),
+                  Text('${L10n.xpLabel}: $_xp', style: const TextStyle(fontSize: 14, color: kurumi)),
                 ],
               ),
             ),
@@ -90,7 +91,7 @@ class _TopPageState extends State<TopPage> {
                 elevation: 4,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
-              child: const Text('レベル選択', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              child: Text(L10n.levelSelect, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 20),
             OutlinedButton(
@@ -100,7 +101,7 @@ class _TopPageState extends State<TopPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 60, vertical: 18),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               ),
-              child: const Text('ランダムプレイ', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: tokiwa)),
+              child: Text(L10n.randomPlay, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: tokiwa)),
             ),
           ],
         ),
@@ -110,14 +111,14 @@ class _TopPageState extends State<TopPage> {
 
   void _showRandomPlayMenu(BuildContext context) {
     final List<Map<String, dynamic>> options = [
-      {'label': '完全おまかせ', 'difficulties': ['とても簡単', '簡単', 'ふつう', '難しい', '超難しい'], 'color': Colors.blueGrey},
-      {'label': '初級セット (簡単め)', 'difficulties': ['とても簡単', '簡単'], 'color': Colors.green},
-      {'label': '中上級セット (手応えあり)', 'difficulties': ['ふつう', '難しい'], 'color': Colors.orange},
-      {'label': 'とても簡単', 'difficulties': ['とても簡単'], 'color': Colors.blue[200]},
-      {'label': '簡単', 'difficulties': ['簡単'], 'color': Colors.blue[400]},
-      {'label': 'ふつう', 'difficulties': ['ふつう'], 'color': Colors.blue[600]},
-      {'label': '難しい', 'difficulties': ['難しい'], 'color': Colors.blue[800]},
-      {'label': '超難しい', 'difficulties': ['超難しい'], 'color': Colors.purple},
+      {'label': L10n.randomAll, 'difficulties': [L10n.diffVeryEasy, L10n.diffEasy, L10n.diffNormal, L10n.diffHard, L10n.diffVeryHard], 'color': Colors.blueGrey},
+      {'label': L10n.randomBeginner, 'difficulties': [L10n.diffVeryEasy, L10n.diffEasy], 'color': Colors.green},
+      {'label': L10n.randomAdvanced, 'difficulties': [L10n.diffNormal, L10n.diffHard], 'color': Colors.orange},
+      {'label': L10n.diffVeryEasy, 'difficulties': [L10n.diffVeryEasy], 'color': Colors.blue[200]},
+      {'label': L10n.diffEasy, 'difficulties': [L10n.diffEasy], 'color': Colors.blue[400]},
+      {'label': L10n.diffNormal, 'difficulties': [L10n.diffNormal], 'color': Colors.blue[600]},
+      {'label': L10n.diffHard, 'difficulties': [L10n.diffHard], 'color': Colors.blue[800]},
+      {'label': L10n.diffVeryHard, 'difficulties': [L10n.diffVeryHard], 'color': Colors.purple},
     ];
 
     showModalBottomSheet(
@@ -134,7 +135,7 @@ class _TopPageState extends State<TopPage> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              const Text('難易度を選んで開始', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: tokiwa)),
+              Text(L10n.randomMenuTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: tokiwa)),
               const SizedBox(height: 15),
               Expanded(
                 child: ListView.builder(

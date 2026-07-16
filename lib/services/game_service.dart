@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n.dart';
 
 class GameService {
   static const String _unlockedLevelKey = 'unlocked_level';
@@ -21,13 +22,13 @@ class GameService {
 
   // 段位を取得
   static String getRank(int xp) {
-    if (xp >= 5000) return '最高段位：数独聖人';
-    if (xp >= 2000) return '九段：数独名人';
-    if (xp >= 1000) return '五段：数独達人';
-    if (xp >= 500) return '初段：数独師範';
-    if (xp >= 200) return '三級：数独熟練';
-    if (xp >= 50) return '七級：数独初級';
-    return '十級：数独見習い';
+    if (xp >= 5000) return L10n.rankSaint;
+    if (xp >= 2000) return L10n.rank9d;
+    if (xp >= 1000) return L10n.rank5d;
+    if (xp >= 500) return L10n.rank1d;
+    if (xp >= 200) return L10n.rank3;
+    if (xp >= 50) return L10n.rank7;
+    return L10n.rank10;
   }
 
   // 解放されている最大レベルを取得 (デフォルトは1)

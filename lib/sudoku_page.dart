@@ -8,6 +8,7 @@ import 'services/game_service.dart';
 import 'services/settings_service.dart';
 import 'data/sudoku_data.dart';
 import 'utils/sudoku_generator.dart';
+import 'l10n.dart';
 
 class SudokuPage extends StatefulWidget {
   final SudokuLevel level;
@@ -251,10 +252,10 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: washi,
-        title: const Text('リセット', style: TextStyle(color: tokiwa, fontWeight: FontWeight.bold)),
-        content: const Text('最初からやり直しますか？'),
+        title: Text(L10n.reset, style: const TextStyle(color: tokiwa, fontWeight: FontWeight.bold)),
+        content: Text(L10n.resetConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('キャンセル', style: TextStyle(color: kurumi))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.cancel, style: const TextStyle(color: kurumi))),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
@@ -266,7 +267,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
               });
               _autoSave();
             }, 
-            child: const Text('最初からやり直す', style: TextStyle(color: enji))
+            child: Text(L10n.reset, style: const TextStyle(color: enji))
           ),
         ],
       ),
@@ -325,11 +326,11 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: const BorderSide(color: tokiwa, width: 2)),
               title: Column(children: [
                 Icon(isWin ? Icons.emoji_events : Icons.sentiment_very_dissatisfied, size: 80, color: isWin ? Colors.orange : enji),
-                Text(isWin ? 'ゲームクリア！' : 'ゲームオーバー', style: TextStyle(fontWeight: FontWeight.bold, color: isWin ? Colors.orange : enji)),
+                Text(isWin ? L10n.gameClear : L10n.gameOver, style: TextStyle(fontWeight: FontWeight.bold, color: isWin ? Colors.orange : enji)),
               ]),
               content: Text(isWin 
-                ? '素晴らしい！${widget.level.id != 0 ? 'レベル${widget.level.id}をクリアしました！' : ''}\n(経験値を獲得しました)\nタイム: ${_formatTime(_secondsElapsed)}' 
-                : 'ミスが制限回数に達しました。', textAlign: TextAlign.center),
+                ? '${L10n.clearMessage}${widget.level.id != 0 ? '\n${L10n.levelLabel} ${widget.level.id}' : ''}\n${L10n.xpGained}\n${L10n.time}: ${_formatTime(_secondsElapsed)}' 
+                : L10n.gameOverMessage, textAlign: TextAlign.center),
               actions: [
                 Column(
                   children: [
@@ -351,12 +352,12 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                           }
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: tokiwa, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 45)),
-                        child: Text(widget.level.id != 0 ? '次のレベルへ進む' : '次のランダム問題へ'),
+                        child: Text(widget.level.id != 0 ? L10n.nextLevel : L10n.nextRandom),
                       ),
                     const SizedBox(height: 10),
                     TextButton(
                       onPressed: () { Navigator.pop(context); Navigator.pop(context); },
-                      child: const Text('戻る', style: TextStyle(color: kurumi)),
+                      child: Text(L10n.back, style: const TextStyle(color: kurumi)),
                     ),
                   ],
                 )
@@ -381,62 +382,30 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
           child: child,
         );
       },
-      child: Scaffold(
-        backgroundColor: washi,
         appBar: AppBar(
-          title: Text(widget.level.id == 0 ? 'ランダムモード' : 'レベル ${widget.level.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(widget.level.id == 0 ? L10n.randomMode : '${L10n.levelLabel} ${widget.level.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
+          centerTitle: true,
           backgroundColor: tokiwa,
           foregroundColor: Colors.white,
           actions: [
             IconButton(
               icon: Icon(_bgmEnabled ? Icons.music_note : Icons.music_off),
               onPressed: _toggleBGM,
-              tooltip: 'BGMの切り替え',
+              tooltip: L10n.bgmTooltip,
             ),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _isGameOver ? null : _resetLevel,
-              tooltip: '最初からやり直す',
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Center(
-                child: TextButton.icon(
-                  icon: const Icon(Icons.lightbulb_outline, size: 20, color: Colors.white),
-                  label: Text('ヒント ${_initialHintLimit == 0 ? '∞' : "($_hintCount)"}', style: const TextStyle(color: Colors.white)),
-                  onPressed: (_initialHintLimit == 0 || _hintCount > 0) && !_isGameOver ? _useHint : null,
-                ),
-              ),
-            )
           ],
         ),
         body: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: _maxErrors > 10 
-                      ? [const Icon(Icons.favorite, color: enji), Text(' x ∞', style: const TextStyle(fontSize: 18, color: tokiwa))]
-                      : List.generate(_maxErrors, (index) => Icon(
-                          index < _errorCount ? Icons.close : Icons.favorite, 
-                          color: index < _errorCount ? Colors.grey : enji, 
-                          size: 20
-                        )),
-                  ),
-                  Text('時間: ${_formatTime(_secondsElapsed)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: tokiwa)),
-                ],
-              ),
-            ),
+            _buildStatusBar(),
             _buildGrid(),
             const Spacer(),
+            _buildControlPanel(),
+            const SizedBox(height: 16),
             _buildKeypad(),
-            const SizedBox(height: 40),
+            const SizedBox(height: 30),
           ],
         ),
-      ),
     );
   }
 
@@ -462,8 +431,12 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                   decoration: BoxDecoration(
                     color: isSelected ? tokiwa.withOpacity(0.15) : Colors.transparent,
                     border: Border(
-                      bottom: BorderSide(color: (r + 1) % 3 == 0 ? kurumi : Colors.black12, width: (r + 1) % 3 == 0 ? 3.0 : 0.5),
-                      right: BorderSide(color: (c + 1) % 3 == 0 ? kurumi : Colors.black12, width: (c + 1) % 3 == 0 ? 3.0 : 0.5),
+                      bottom: r == 8 
+                          ? BorderSide.none 
+                          : BorderSide(color: (r + 1) % 3 == 0 ? kurumi : Colors.black12, width: (r + 1) % 3 == 0 ? 3.0 : 0.5),
+                      right: c == 8 
+                          ? BorderSide.none 
+                          : BorderSide(color: (c + 1) % 3 == 0 ? kurumi : Colors.black12, width: (c + 1) % 3 == 0 ? 3.0 : 0.5),
                     ),
                   ),
                   child: Center(
@@ -485,18 +458,102 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     );
   }
 
+  Widget _buildStatusBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+      color: Colors.white.withOpacity(0.5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: _maxErrors > 10 
+              ? [const Icon(Icons.favorite, color: enji), Text(' x ∞', style: const TextStyle(fontSize: 18, color: tokiwa))]
+              : List.generate(_maxErrors, (index) => Icon(
+                  index < _errorCount ? Icons.close : Icons.favorite, 
+                  color: index < _errorCount ? Colors.grey : enji, 
+                  size: 20
+                )),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: tokiwa.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '${L10n.time}: ${_formatTime(_secondsElapsed)}', 
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: tokiwa)
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlPanel() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildControlButton(
+            icon: Icons.lightbulb_outline,
+            label: '${L10n.hint} ${_initialHintLimit == 0 ? '∞' : "($_hintCount)"}',
+            onPressed: (_initialHintLimit == 0 || _hintCount > 0) && !_isGameOver ? _useHint : null,
+          ),
+          _buildControlButton(
+            icon: Icons.backspace_outlined,
+            label: L10n.erase,
+            onPressed: _isGameOver ? null : () => _onNumberInput(0),
+          ),
+          _buildControlButton(
+            icon: Icons.refresh,
+            label: L10n.reset,
+            onPressed: _isGameOver ? null : _resetLevel,
+            color: enji.withOpacity(0.7),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlButton({required IconData icon, required String label, VoidCallback? onPressed, Color? color}) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            side: BorderSide(color: (color ?? tokiwa).withOpacity(0.5)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            backgroundColor: Colors.white.withOpacity(0.8),
+            foregroundColor: color ?? tokiwa,
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 24),
+              const SizedBox(height: 4),
+              Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildKeypad() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Column(children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
           children: List.generate(5, (i) => _buildKeypadButton(i + 1))
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
-          children: [...List.generate(4, (i) => _buildKeypadButton(i + 6)), _buildKeypadButton(0, label: '消去')]
+          children: List.generate(4, (i) => _buildKeypadButton(i + 6))
         ),
       ]),
     );

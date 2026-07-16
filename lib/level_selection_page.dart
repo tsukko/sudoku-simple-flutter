@@ -4,6 +4,7 @@ import 'sudoku_page.dart';
 import 'services/game_service.dart';
 import 'services/settings_service.dart';
 import 'models/sudoku_level.dart';
+import 'l10n.dart';
 
 class LevelSelectionPage extends StatefulWidget {
   const LevelSelectionPage({super.key});
@@ -41,14 +42,12 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
   }
 
   String _getDifficultyName(String difficulty) {
-    switch (difficulty) {
-      case 'とても簡単': return 'とても簡単';
-      case '簡単': return '簡単';
-      case 'ふつう': return 'ふつう';
-      case '難しい': return '難しい';
-      case '超難しい': return '超難しい';
-      default: return difficulty;
-    }
+    if (difficulty == L10n.diffVeryEasy || difficulty == 'とても簡単') return L10n.diffVeryEasy;
+    if (difficulty == L10n.diffEasy || difficulty == '簡単') return L10n.diffEasy;
+    if (difficulty == L10n.diffNormal || difficulty == 'ふつう') return L10n.diffNormal;
+    if (difficulty == L10n.diffHard || difficulty == '難しい') return L10n.diffHard;
+    if (difficulty == L10n.diffVeryHard || difficulty == '超難しい') return L10n.diffVeryHard;
+    return difficulty;
   }
 
   @override
@@ -58,7 +57,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     return Scaffold(
       backgroundColor: washi,
       appBar: AppBar(
-        title: const Text('レベル選択', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(L10n.levelSelect, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: tokiwa,
         foregroundColor: Colors.white,
       ),
@@ -92,7 +91,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('レベル ${level.id}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text('${L10n.levelLabel} ${level.id}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     if (isLocked) ...[
                       const SizedBox(width: 8),
                       const Icon(Icons.lock, size: 20, color: kurumi),
@@ -128,11 +127,11 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('レベル ${level.id}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: tokiwa)),
+            Text('${L10n.levelLabel} ${level.id}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: tokiwa)),
             const SizedBox(height: 20),
             ListTile(
               leading: const Icon(Icons.play_arrow, color: tokiwa),
-              title: const Text('最初からスタート', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(L10n.startNew, style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () async {
                 Navigator.pop(context);
                 await GameService.clearProgress(level.id);
@@ -142,8 +141,8 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
             ),
             ListTile(
               leading: const Icon(Icons.restore, color: kurumi),
-              title: const Text('途中からスタート', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('経過時間: ${_formatTime(progress['seconds'])}'),
+              title: Text(L10n.resume, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text('${L10n.time}: ${_formatTime(progress['seconds'])}'),
               onTap: () {
                 Navigator.pop(context);
                 _startGame(context, level, progress);
