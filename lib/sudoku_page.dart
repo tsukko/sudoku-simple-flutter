@@ -205,8 +205,11 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
       if (num == 0) {
         _currentGrid[_selectedRow!][_selectedCol!] = 0;
       } else {
+        final int correctNum = _solutionGrid[_selectedRow!][_selectedCol!];
         _currentGrid[_selectedRow!][_selectedCol!] = num;
-        if (num != _solutionGrid[_selectedRow!][_selectedCol!] && _hasConflict(_selectedRow!, _selectedCol!, num)) {
+        
+        if (num != correctNum) {
+          // 正解と異なる場合は即座にミス判定
           _errorCount++;
           _shakeScreen();
           if (_errorCount >= _maxErrors) _endGame(false);
@@ -299,6 +302,12 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     _isGameOver = true;
     _bgmPlayer.stop();
 
+    // 効果音の再生
+    if (_bgmEnabled) {
+      final effectPlayer = AudioPlayer();
+      await effectPlayer.play(AssetSource(isWin ? 'sounds/clear.mp3' : 'sounds/gameover.mp3'));
+    }
+
     if (isWin) {
       int xpGained = (widget.level.id == 0) ? 5 : 10;
       await GameService.addXp(xpGained);
@@ -382,6 +391,8 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
           child: child,
         );
       },
+      child: Scaffold(
+        backgroundColor: washi,
         appBar: AppBar(
           title: Text(widget.level.id == 0 ? L10n.randomMode : '${L10n.levelLabel} ${widget.level.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
           centerTitle: true,
@@ -406,6 +417,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
             const SizedBox(height: 30),
           ],
         ),
+      ),
     );
   }
 
@@ -445,7 +457,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                       style: TextStyle(
                         fontSize: 22, 
                         fontWeight: FontWeight.bold, 
-                        color: isInitial ? kurumi : (isWrong ? enji : wakakusa)
+                        color: isInitial ? kurumi : (val != _solutionGrid[r][c] ? enji : wakakusa)
                       )
                     )
                   ),
@@ -545,17 +557,23 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
   Widget _buildKeypad() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Column(children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
-          children: List.generate(5, (i) => _buildKeypadButton(i + 1))
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
-          children: List.generate(4, (i) => _buildKeypadButton(i + 6))
-        ),
-      ]),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+            children: List.generate(5, (i) => _buildKeypadButton(i + 1))
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
+            children: [
+              ...List.generate(4, (i) => _buildKeypadButton(i + 6)),
+              _buildKeypadButton(0, label: L10n.erase),
+            ]
+          ),
+        ],
+      ),
     );
   }
 
@@ -568,8 +586,8 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
         child: Opacity(
           opacity: isCompleted ? 0.3 : 1.0,
-          child: SizedBox(
-            height: 65,
+          child: AspectRatio(
+            aspectRatio: 1.0, // ボタンを正方形に保つ
             child: ElevatedButton(
               onPressed: isCompleted ? null : () => _onNumberInput(num),
               style: ElevatedButton.styleFrom(
@@ -583,7 +601,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
               child: Text(
                 label ?? num.toString(), 
                 style: TextStyle(
-                  fontSize: isEraser ? 16 : 24,
+                  fontSize: isEraser ? 14 : 24, // 消去ボタンの文字サイズを少し小さく
                   fontWeight: FontWeight.bold
                 )
               ),
