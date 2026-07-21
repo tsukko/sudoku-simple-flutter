@@ -166,14 +166,31 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  void _startRandomGame(BuildContext context, List<String> possibleDifficulties) {
-    final randomDifficulty = possibleDifficulties[Random().nextInt(possibleDifficulties.length)];
-    final randomLevel = SudokuGenerator.generateRandomLevel(
-      id: 0, 
-      difficulty: randomDifficulty
-    );
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => SudokuPage(level: randomLevel)),
-    ).then((_) => _loadProgress());
+  void _startRandomGame(BuildContext context, List<String> possibleDifficulties) async {
+    List<String> currentDifficulties = possibleDifficulties;
+    bool continueLoop = true;
+
+    while (continueLoop) {
+      final randomDifficulty = currentDifficulties[Random().nextInt(currentDifficulties.length)];
+      final randomLevel = SudokuGenerator.generateRandomLevel(
+        id: 0, 
+        difficulty: randomDifficulty
+      );
+      
+      final result = await Navigator.of(context).push<Map<String, dynamic>>(
+        MaterialPageRoute(builder: (context) => SudokuPage(level: randomLevel)),
+      );
+
+      _loadProgress();
+
+      if (result != null && result.containsKey('nextLevelId') && result['nextLevelId'] == 0) {
+        // 次のランダムゲームがリクエストされた場合、ループを継続
+        if (result.containsKey('difficulty')) {
+          currentDifficulties = [result['difficulty'] as String];
+        }
+      } else {
+        continueLoop = false;
+      }
+    }
   }
 }

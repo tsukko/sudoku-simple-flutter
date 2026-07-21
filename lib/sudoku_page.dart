@@ -41,6 +41,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
 
   late AnimationController _shakeController;
   late AudioPlayer _bgmPlayer;
+  late AudioPlayer _effectPlayer;
 
   // 和風カラーパレット（緑・茶系）
   static const Color tokiwa = Color(0xFF2D5A27); // 常盤色 (深い緑)
@@ -64,20 +65,23 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
       vsync: this,
     );
     _bgmPlayer = AudioPlayer();
+    _effectPlayer = AudioPlayer();
     _initGame();
   }
 
   // アプリのライフサイクルが変化した時の処理
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!_bgmEnabled || _isGameOver) return;
-
     if (state == AppLifecycleState.paused) {
-      // バックグラウンドに移行した時に停止
-      _bgmPlayer.pause();
+      if (_bgmEnabled && !_isGameOver) {
+        _bgmPlayer.pause();
+      }
+      _effectPlayer.pause();
     } else if (state == AppLifecycleState.resumed) {
-      // フォアグラウンドに戻ってきた時に再開
-      _bgmPlayer.resume();
+      if (_bgmEnabled && !_isGameOver) {
+        _bgmPlayer.resume();
+      }
+      _effectPlayer.resume();
     }
   }
 
@@ -138,6 +142,8 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     _shakeController.dispose();
     _bgmPlayer.stop();
     _bgmPlayer.dispose();
+    _effectPlayer.stop();
+    _effectPlayer.dispose();
     super.dispose();
   }
 
@@ -230,21 +236,81 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
 
   void _useHint() {
     if (_isGameOver || (_initialHintLimit != 0 && _hintCount <= 0)) return;
-    List<Point<int>> targetCells = [];
-    for (int r = 0; r < 9; r++) {
-      for (int c = 0; c < 9; c++) {
-        if (_currentGrid[r][c] != _solutionGrid[r][c]) {
-          targetCells.add(Point(r, c));
-        }
+
+    Point<int>? target;
+
+    // 1. 現在選択されているマスが空か、間違っている場合、そこをヒント対象にする
+    if (_selectedRow != null && _selectedCol != null) {
+      final int r = _selectedRow!;
+      final int c = _selectedCol!;
+      if (_initialGrid[r][c] == 0 && _currentGrid[r][c] != _solutionGrid[r][c]) {
+        target = Point(r, c);
       }
     }
-    if (targetCells.isEmpty) return;
-    final target = targetCells[Random().nextInt(targetCells.length)];
+
+    // 2. 選択マスがない、もしくはすでに正解で埋まっている場合、
+    //    周囲（行、列、3x3ブロック）に最も数字が埋まっている（＝最も詰まっている、制約が多い）空きマスを探す
+    if (target == null) {
+      int maxConstraints = -1;
+      List<Point<int>> bestCandidates = [];
+
+      for (int r = 0; r < 9; r++) {
+        for (int c = 0; c < 9; c++) {
+          // 初期値ではなく、現在正解と異なっているマス（未入力を含む）が候補
+          if (_currentGrid[r][c] != _solutionGrid[r][c] && _initialGrid[r][c] == 0) {
+            // このマスの周囲の埋まり具合（手がかり数）を算出する
+            int filledCount = 0;
+
+            // 同一列の埋まっているマスの数（正しい数字または0でない入力）
+            for (int col = 0; col < 9; col++) {
+              if (col != c && _currentGrid[r][col] != 0) {
+                filledCount++;
+              }
+            }
+
+            // 同一横行の埋まっているマスの数
+            for (int row = 0; row < 9; row++) {
+              if (row != r && _currentGrid[row][c] != 0) {
+                filledCount++;
+              }
+            }
+
+            // 同一3x3ブロックの埋まっているマスの数
+            int startRow = r - r % 3;
+            int startCol = c - c % 3;
+            for (int i = 0; i < 3; i++) {
+              for (int j = 0; j < 3; j++) {
+                int currR = startRow + i;
+                int currC = startCol + j;
+                if ((currR != r || currC != c) && _currentGrid[currR][currC] != 0) {
+                  filledCount++;
+                }
+              }
+            }
+
+            if (filledCount > maxConstraints) {
+              maxConstraints = filledCount;
+              bestCandidates = [Point(r, c)];
+            } else if (filledCount == maxConstraints) {
+              bestCandidates.add(Point(r, c));
+            }
+          }
+        }
+      }
+
+      if (bestCandidates.isNotEmpty) {
+        // 同率で最も詰まっているマスがある場合は、その中からランダムで1つ選ぶ
+        target = bestCandidates[Random().nextInt(bestCandidates.length)];
+      }
+    }
+
+    if (target == null) return;
+
     setState(() {
       if (_initialHintLimit != 0) _hintCount--;
-      _currentGrid[target.x][target.y] = _solutionGrid[target.x][target.y];
-      _selectedRow = target.x;
-      _selectedCol = target.y;
+      _currentGrid[target!.x][target!.y] = _solutionGrid[target!.x][target!.y];
+      _selectedRow = target!.x;
+      _selectedCol = target!.y;
       if (_isComplete()) _endGame(true);
     });
     _autoSave();
@@ -304,8 +370,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
 
     // 効果音の再生
     if (_bgmEnabled) {
-      final effectPlayer = AudioPlayer();
-      await effectPlayer.play(AssetSource(isWin ? 'sounds/clear.mp3' : 'sounds/gameover.mp3'));
+      await _effectPlayer.play(AssetSource(isWin ? 'sounds/clear.mp3' : 'sounds/gameover.mp3'));
     }
 
     if (isWin) {
@@ -346,18 +411,17 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                     if (isWin)
                       ElevatedButton(
                         onPressed: () {
+                          // ダイアログを閉じる
                           Navigator.pop(context);
                           if (widget.level.id != 0 && widget.level.id < sudokuLevels.length) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => SudokuPage(level: sudokuLevels[widget.level.id])),
-                            );
+                            // 呼び出し元の LevelSelectionPage に次のレベルIDを返し、自身の画面は終了する
+                            Navigator.pop(context, {'nextLevelId': widget.level.id + 1});
+                          } else if (widget.level.id == 0) {
+                            // ランダムモードの場合は、呼び出し元にランダム継続（nextLevelId: 0）を返して終了する
+                            Navigator.pop(context, {'nextLevelId': 0, 'difficulty': widget.level.difficulty});
                           } else {
-                            final randomLevel = SudokuGenerator.generateRandomLevel(id: 0, difficulty: widget.level.difficulty);
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => SudokuPage(level: randomLevel)),
-                            );
+                            // 最終レベルの場合は、普通にレベル選択画面に戻る
+                            Navigator.pop(context);
                           }
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: tokiwa, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 45)),
@@ -365,7 +429,10 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                       ),
                     const SizedBox(height: 10),
                     TextButton(
-                      onPressed: () { Navigator.pop(context); Navigator.pop(context); },
+                      onPressed: () { 
+                        Navigator.pop(context); // ダイアログを閉じる
+                        Navigator.pop(context); // 数独画面を閉じる（通常通り戻る）
+                      },
                       child: Text(L10n.back, style: const TextStyle(color: kurumi)),
                     ),
                   ],

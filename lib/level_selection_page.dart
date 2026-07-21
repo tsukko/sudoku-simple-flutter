@@ -160,12 +160,40 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
-  void _startGame(BuildContext context, SudokuLevel level, Map<String, dynamic>? savedProgress) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SudokuPage(level: level, savedProgress: savedProgress),
-      ),
-    ).then((_) => _loadData());
+  Future<void> _startGame(BuildContext context, SudokuLevel level, Map<String, dynamic>? savedProgress) async {
+    SudokuLevel? currentLevel = level;
+    Map<String, dynamic>? progress = savedProgress;
+
+    while (currentLevel != null) {
+      final result = await Navigator.push<Map<String, dynamic>>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SudokuPage(level: currentLevel!, savedProgress: progress),
+        ),
+      );
+
+      // 画面から戻ってきた直後にデータを再読み込み
+      await _loadData();
+
+      // 戻り値に `nextLevelId` が指定されている場合は、続けて次のレベルを自動起動する
+      if (result != null && result.containsKey('nextLevelId')) {
+        final int nextId = result['nextLevelId'] as int;
+        if (nextId > 0 && nextId <= sudokuLevels.length) {
+          // 次のレベルのインスタンスを特定
+          final nextLevel = sudokuLevels.firstWhere((lvl) => lvl.id == nextId);
+          
+          // 次のレベルの中断データがあるか確認
+          final saved = await GameService.loadProgress(nextId);
+          
+          currentLevel = nextLevel;
+          progress = saved;
+        } else {
+          currentLevel = null;
+        }
+      } else {
+        // 次のレベルへの自動遷移指示がない場合はループを抜ける
+        currentLevel = null;
+      }
+    }
   }
 }
