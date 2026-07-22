@@ -7,7 +7,6 @@ import 'models/sudoku_level.dart';
 import 'services/game_service.dart';
 import 'services/settings_service.dart';
 import 'data/sudoku_data.dart';
-import 'utils/sudoku_generator.dart';
 import 'l10n.dart';
 
 class SudokuPage extends StatefulWidget {
@@ -25,6 +24,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
   late List<List<int>> _initialGrid;
   late List<List<int>> _solutionGrid;
   late List<List<int>> _currentGrid;
+  late List<List<Set<int>>> _notesGrid;
   
   int? _selectedRow;
   int? _selectedCol;
@@ -38,6 +38,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
   bool _isLoading = true;
   bool _vibrationEnabled = true;
   bool _bgmEnabled = true;
+  bool _isNoteMode = false;
 
   late AnimationController _shakeController;
   late AudioPlayer _bgmPlayer;
@@ -101,11 +102,13 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
 
       if (widget.savedProgress != null) {
         _currentGrid = widget.savedProgress!['grid'];
+        _notesGrid = widget.savedProgress!['notes'];
         _errorCount = widget.savedProgress!['errors'];
         _secondsElapsed = widget.savedProgress!['seconds'];
         _hintCount = widget.savedProgress!['hints'];
       } else {
         _currentGrid = List.generate(9, (i) => List.from(_initialGrid[i]));
+        _notesGrid = List.generate(9, (i) => List.generate(9, (j) => <int>{}));
         _hintCount = hintLimit == 0 ? 99 : hintLimit;
       }
       _isLoading = false;
@@ -163,6 +166,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     GameService.saveProgress(
       levelId: widget.level.id,
       currentGrid: _currentGrid,
+      notesGrid: _notesGrid,
       errorCount: _errorCount,
       secondsElapsed: _secondsElapsed,
       hintCount: _hintCount,
@@ -208,23 +212,56 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     if (_initialGrid[_selectedRow!][_selectedCol!] != 0) return;
 
     setState(() {
-      if (num == 0) {
-        _currentGrid[_selectedRow!][_selectedCol!] = 0;
+      if (_isNoteMode && num != 0) {
+        // メモモードの場合
+        if (_currentGrid[_selectedRow!][_selectedCol!] == 0) {
+          if (_notesGrid[_selectedRow!][_selectedCol!].contains(num)) {
+            _notesGrid[_selectedRow!][_selectedCol!].remove(num);
+          } else {
+            _notesGrid[_selectedRow!][_selectedCol!].add(num);
+          }
+        }
       } else {
-        final int correctNum = _solutionGrid[_selectedRow!][_selectedCol!];
-        _currentGrid[_selectedRow!][_selectedCol!] = num;
-        
-        if (num != correctNum) {
-          // 正解と異なる場合は即座にミス判定
-          _errorCount++;
-          _shakeScreen();
-          if (_errorCount >= _maxErrors) _endGame(false);
+        // 通常モードの場合
+        if (num == 0) {
+          _currentGrid[_selectedRow!][_selectedCol!] = 0;
+          _notesGrid[_selectedRow!][_selectedCol!].clear();
         } else {
-          if (_isComplete()) _endGame(true);
+          final int correctNum = _solutionGrid[_selectedRow!][_selectedCol!];
+          _currentGrid[_selectedRow!][_selectedCol!] = num;
+          
+          if (num != correctNum) {
+            // 正解と異なる場合は即座にミス判定
+            _errorCount++;
+            _shakeScreen();
+            if (_errorCount >= _maxErrors) _endGame(false);
+          } else {
+            // 正解を入力した場合、そのマスのメモをクリアし、
+            // 同一の行・列・ブロックにある同じ数字のメモも自動で消去する
+            _notesGrid[_selectedRow!][_selectedCol!].clear();
+            _clearSyncNotes(_selectedRow!, _selectedCol!, num);
+            
+            if (_isComplete()) _endGame(true);
+          }
         }
       }
     });
     _autoSave();
+  }
+
+  // 指定されたマスの周囲（行・列・ブロック）から特定の数字のメモを消去する
+  void _clearSyncNotes(int row, int col, int num) {
+    for (int i = 0; i < 9; i++) {
+      _notesGrid[row][i].remove(num);
+      _notesGrid[i][col].remove(num);
+    }
+    int startRow = row - row % 3;
+    int startCol = col - col % 3;
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        _notesGrid[startRow + i][startCol + j].remove(num);
+      }
+    }
   }
 
   void _shakeScreen() async {
@@ -305,12 +342,19 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     }
 
     if (target == null) return;
+    final hintTarget = target;
 
     setState(() {
       if (_initialHintLimit != 0) _hintCount--;
-      _currentGrid[target!.x][target!.y] = _solutionGrid[target!.x][target!.y];
-      _selectedRow = target!.x;
-      _selectedCol = target!.y;
+      final int val = _solutionGrid[hintTarget.x][hintTarget.y];
+      _currentGrid[hintTarget.x][hintTarget.y] = val;
+      _selectedRow = hintTarget.x;
+      _selectedCol = hintTarget.y;
+      
+      // ヒントで埋めたマスのメモをクリアし、周囲の同期メモも消去する
+      _notesGrid[hintTarget.x][hintTarget.y].clear();
+      _clearSyncNotes(hintTarget.x, hintTarget.y, val);
+      
       if (_isComplete()) _endGame(true);
     });
     _autoSave();
@@ -330,6 +374,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
               Navigator.pop(context);
               setState(() {
                 _currentGrid = List.generate(9, (i) => List.from(_initialGrid[i]));
+                _notesGrid = List.generate(9, (i) => List.generate(9, (j) => <int>{}));
                 _errorCount = 0;
                 _secondsElapsed = 0;
                 _hintCount = _initialHintLimit == 0 ? 99 : _initialHintLimit;
@@ -502,7 +547,6 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
             itemBuilder: (context, index) {
               int r = index ~/ 9, c = index % 9, val = _currentGrid[r][c];
               bool isInitial = _initialGrid[r][c] != 0, isSelected = _selectedRow == r && _selectedCol == c;
-              bool isWrong = !isInitial && val != 0 && _hasConflict(r, c, val);
 
               return GestureDetector(
                 onTap: () => _onCellTap(r, c),
@@ -519,20 +563,52 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                     ),
                   ),
                   child: Center(
-                    child: Text(
-                      val == 0 ? '' : val.toString(), 
-                      style: TextStyle(
-                        fontSize: 22, 
-                        fontWeight: FontWeight.bold, 
-                        color: isInitial ? kurumi : (val != _solutionGrid[r][c] ? enji : wakakusa)
-                      )
-                    )
+                    child: val != 0
+                      ? Text(
+                          val.toString(), 
+                          style: TextStyle(
+                            fontSize: 22, 
+                            fontWeight: FontWeight.bold, 
+                            color: isInitial ? kurumi : (val != _solutionGrid[r][c] ? enji : wakakusa)
+                          )
+                        )
+                      : _buildNotes(r, c),
                   ),
                 ),
               );
             },
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNotes(int row, int col) {
+    final notes = _notesGrid[row][col];
+    if (notes.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.all(2.0),
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 1.0,
+        ),
+        itemCount: 9,
+        itemBuilder: (context, index) {
+          final num = index + 1;
+          return Center(
+            child: Text(
+              notes.contains(num) ? num.toString() : '',
+              style: TextStyle(
+                fontSize: 8,
+                color: kurumi.withOpacity(0.6),
+                height: 1.0,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -581,6 +657,17 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
             onPressed: (_initialHintLimit == 0 || _hintCount > 0) && !_isGameOver ? _useHint : null,
           ),
           _buildControlButton(
+            icon: _isNoteMode ? Icons.edit : Icons.edit_outlined,
+            label: L10n.noteMode, // このキーがL10nにあるか確認が必要
+            onPressed: _isGameOver ? null : () {
+              setState(() {
+                _isNoteMode = !_isNoteMode;
+              });
+            },
+            color: _isNoteMode ? tokiwa : null,
+            isFilled: _isNoteMode,
+          ),
+          _buildControlButton(
             icon: Icons.backspace_outlined,
             label: L10n.erase,
             onPressed: _isGameOver ? null : () => _onNumberInput(0),
@@ -596,7 +683,13 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     );
   }
 
-  Widget _buildControlButton({required IconData icon, required String label, VoidCallback? onPressed, Color? color}) {
+  Widget _buildControlButton({
+    required IconData icon, 
+    required String label, 
+    VoidCallback? onPressed, 
+    Color? color,
+    bool isFilled = false,
+  }) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -606,14 +699,14 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
             padding: const EdgeInsets.symmetric(vertical: 12),
             side: BorderSide(color: (color ?? tokiwa).withOpacity(0.5)),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            backgroundColor: Colors.white.withOpacity(0.8),
+            backgroundColor: isFilled ? (color ?? tokiwa).withOpacity(0.1) : Colors.white.withOpacity(0.8),
             foregroundColor: color ?? tokiwa,
           ),
           child: Column(
             children: [
               Icon(icon, size: 24),
               const SizedBox(height: 4),
-              Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
             ],
           ),
         ),

@@ -50,13 +50,19 @@ class GameService {
   static Future<void> saveProgress({
     required int levelId,
     required List<List<int>> currentGrid,
+    required List<List<Set<int>>> notesGrid,
     required int errorCount,
     required int secondsElapsed,
     required int hintCount,
   }) async {
     final prefs = await SharedPreferences.getInstance();
+    
+    // SetをListに変換してからシリアライズ
+    final serializedNotes = notesGrid.map((row) => row.map((set) => set.toList()).toList()).toList();
+    
     final data = {
       'grid': currentGrid,
+      'notes': serializedNotes,
       'errors': errorCount,
       'seconds': secondsElapsed,
       'hints': hintCount,
@@ -71,13 +77,19 @@ class GameService {
     if (json == null) return null;
     
     final Map<String, dynamic> data = jsonDecode(json);
-    // JSONからは List<dynamic> で戻ってくるので List<List<int>> に変換
+    // Gridの復元
     List<List<int>> grid = (data['grid'] as List)
         .map((row) => (row as List).map((cell) => cell as int).toList())
         .toList();
     
+    // Notesの復元
+    List<List<Set<int>>> notes = (data['notes'] as List?)
+        ?.map((row) => (row as List).map((cell) => (cell as List).map((n) => n as int).toSet()).toList())
+        .toList() ?? List.generate(9, (i) => List.generate(9, (j) => <int>{}));
+    
     return {
       'grid': grid,
+      'notes': notes,
       'errors': data['errors'],
       'seconds': data['seconds'],
       'hints': data['hints'],

@@ -33,6 +33,7 @@ class L10n {
   static String get bgmTooltip => isJapanese ? 'BGMの切り替え' : 'Toggle BGM';
   static String get resetTooltip => isJapanese ? '最初からやり直す' : 'Reset Level';
   static String get hint => isJapanese ? 'ヒント' : 'Hint';
+  static String get noteMode => isJapanese ? 'メモ' : 'Notes';
   static String get time => isJapanese ? '時間' : 'Time';
   static String get erase => isJapanese ? '消去' : 'Erase';
 
