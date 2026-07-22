@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "jp.co.integrityworks.sudoku"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = libs.versions.compileSdk.get().toInt()
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -20,7 +20,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
