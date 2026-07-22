@@ -1,17 +1,35 @@
-# sudoku_simple
+# 和風数独 (Zen Sudoku)
 
-A new Flutter project.
+心和む和のデザインで楽しむ数独アプリです。
 
-## Getting Started
+## 難易度仕様
 
-This project is a starting point for a Flutter application.
+各レベルは、解が唯一であることを保証しながら、難易度に応じてヒント（最初から埋まっている数字）の数が調整されています。
 
-A few resources to get you started if this is your first Flutter project:
+### レベルと難易度の構成
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+| レベル | 難易度 | 初期ヒント数 | 特徴 |
+| :--- | :--- | :--- | :--- |
+| 1 - 20 | **とても簡単** | 55 〜 59 | 初心者向け。基本的なルールを覚えるのに最適です。 |
+| 21 - 40 | **簡単** | 42 〜 46 | 少し手応えが欲しい方向け。サクサク解けます。 |
+| 41 - 60 | **ふつう** | 32 〜 35 | 中級者向け。基本的なテクニックが必要です。 |
+| 61 - 80 | **難しい** | 26 〜 28 | 上級者向け。複数の列やブロックを跨いだ推論が必要です。 |
+| 81 - 100 | **超難しい** | 21 〜 23 | 達人向け。高度な消去法や仮定法が必要になる場合があります。 |
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### ヒントと唯一解の保証
+すべての問題は、自動生成ロジックによって「必ず一つの解に定まる」ことが確認された状態で提供されます。
+
+---
+
+## 開発者向け情報
+
+### 技術スタック
+- **Framework**: Flutter
+- **Language**: Dart
+- **State Management**: StatefulWidget
+- **Persistence**: shared_preferences (XP、アンロック状況、中断データ)
+- **Audio**: audioplayers
+
+### 主要なロジック
+- **SudokuGenerator**: バックトラッキングアルゴリズムを用いて完成盤面を生成し、その後、唯一解を維持できるマスを難易度に応じた目標数まで削除します。
+- **メモモード**: 各マスに対して候補数字を記録できます。正解入力時には周囲の関連するメモが自動的にクリーンアップされます。

@@ -552,7 +552,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                 onTap: () => _onCellTap(r, c),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? tokiwa.withOpacity(0.15) : Colors.transparent,
+                    color: isSelected ? tokiwa.withValues(alpha: 0.15) : Colors.transparent,
                     border: Border(
                       bottom: r == 8 
                           ? BorderSide.none 
@@ -603,7 +603,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
               notes.contains(num) ? num.toString() : '',
               style: TextStyle(
                 fontSize: 8,
-                color: kurumi.withOpacity(0.6),
+                color: kurumi.withValues(alpha: 0.6),
                 height: 1.0,
               ),
             ),
@@ -632,7 +632,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: tokiwa.withOpacity(0.1),
+              color: tokiwa.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -668,15 +668,10 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
             isFilled: _isNoteMode,
           ),
           _buildControlButton(
-            icon: Icons.backspace_outlined,
-            label: L10n.erase,
-            onPressed: _isGameOver ? null : () => _onNumberInput(0),
-          ),
-          _buildControlButton(
             icon: Icons.refresh,
             label: L10n.reset,
             onPressed: _isGameOver ? null : _resetLevel,
-            color: enji.withOpacity(0.7),
+            color: enji.withValues(alpha: 0.7),
           ),
         ],
       ),
@@ -697,9 +692,9 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            side: BorderSide(color: (color ?? tokiwa).withOpacity(0.5)),
+            side: BorderSide(color: (color ?? tokiwa).withValues(alpha: 0.5)),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            backgroundColor: isFilled ? (color ?? tokiwa).withOpacity(0.1) : Colors.white.withOpacity(0.8),
+            backgroundColor: isFilled ? (color ?? tokiwa).withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.8),
             foregroundColor: color ?? tokiwa,
           ),
           child: Column(
@@ -752,10 +747,10 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
               onPressed: isCompleted ? null : () => _onNumberInput(num),
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.zero,
-                backgroundColor: isCompleted ? Colors.grey[300] : Colors.white.withOpacity(0.9),
-                foregroundColor: isEraser ? kurumi.withOpacity(0.7) : tokiwa,
+                backgroundColor: isCompleted ? Colors.grey[300] : Colors.white.withValues(alpha: 0.9),
+                foregroundColor: isEraser ? kurumi.withValues(alpha: 0.7) : tokiwa,
                 surfaceTintColor: washi,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: kurumi.withOpacity(0.3))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: kurumi.withValues(alpha: 0.3))),
                 elevation: 2,
               ),
               child: Text(

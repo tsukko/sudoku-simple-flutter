@@ -63,7 +63,7 @@ class _TopPageState extends State<TopPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: tokiwa, width: 1.5),
               ),
@@ -76,7 +76,7 @@ class _TopPageState extends State<TopPage> {
               ),
             ),
             const SizedBox(height: 40),
-            Icon(Icons.grid_on, size: 120, color: tokiwa.withOpacity(0.8)),
+            Icon(Icons.grid_on, size: 120, color: tokiwa.withValues(alpha: 0.8)),
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
@@ -144,9 +144,9 @@ class _TopPageState extends State<TopPage> {
                   itemBuilder: (context, index) {
                     final opt = options[index];
                     return Card(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       margin: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: tokiwa.withOpacity(0.2))),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: tokiwa.withValues(alpha: 0.2))),
                       child: ListTile(
                         leading: Icon(Icons.casino, color: opt['color'], size: 28),
                         title: Text(opt['label'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: tokiwa)),

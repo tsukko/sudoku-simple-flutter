@@ -82,21 +82,24 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
               elevation: isLocked ? 0 : 3,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
-                side: BorderSide(color: isLocked ? Colors.transparent : tokiwa.withOpacity(0.5)),
+                side: BorderSide(color: isLocked ? Colors.transparent : tokiwa.withValues(alpha: 0.5)),
               ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('${L10n.levelLabel} ${level.id}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                    if (isLocked) ...[
-                      const SizedBox(width: 8),
-                      const Icon(Icons.lock, size: 20, color: kurumi),
-                    ]
-                  ],
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('${L10n.levelLabel} ${level.id}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      if (isLocked) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.lock, size: 20, color: kurumi),
+                      ]
+                    ],
+                  ),
                 ),
                 Text(_getDifficultyName(level.difficulty), style: TextStyle(fontSize: 14, color: isLocked ? Colors.grey : kurumi)),
               ],
@@ -111,9 +114,9 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     final progress = await GameService.loadProgress(level.id);
     if (!mounted) return;
     if (progress == null) {
-      _startGame(context, level, null);
+      _startGame(this.context, level, null);
     } else {
-      _showStartOptions(context, level, progress);
+      _showStartOptions(this.context, level, progress);
     }
   }
 
@@ -136,7 +139,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                 Navigator.pop(context);
                 await GameService.clearProgress(level.id);
                 if (!mounted) return;
-                _startGame(context, level, null);
+                _startGame(this.context, level, null);
               },
             ),
             ListTile(
@@ -165,8 +168,9 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     Map<String, dynamic>? progress = savedProgress;
 
     while (currentLevel != null) {
+      if (!mounted) return;
       final result = await Navigator.push<Map<String, dynamic>>(
-        context,
+        this.context,
         MaterialPageRoute(
           builder: (context) => SudokuPage(level: currentLevel!, savedProgress: progress),
         ),

@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'top_page.dart';
 import 'l10n.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 画面の回転を固定（縦向きのみ）
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const MyApp());
 }
 
