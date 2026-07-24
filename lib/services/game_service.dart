@@ -101,4 +101,17 @@ class GameService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('$_progressPrefix$levelId');
   }
+
+  // すべてのデータをリセットする
+  static Future<void> resetAllData() async {
+    final prefs = await SharedPreferences.getInstance();
+    // 全キーをループして削除（またはシンプルに全クリア、ただし他の設定まで消える可能性に注意）
+    // 今回は数独の進行状況に関連するプレフィックスがついたものとXPを消す
+    final keys = prefs.getKeys();
+    for (String key in keys) {
+      if (key.startsWith(_progressPrefix) || key == _unlockedLevelKey || key == _totalXpKey) {
+        await prefs.remove(key);
+      }
+    }
+  }
 }

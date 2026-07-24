@@ -33,3 +33,32 @@
 ### 主要なロジック
 - **SudokuGenerator**: バックトラッキングアルゴリズムを用いて完成盤面を生成し、その後、唯一解を維持できるマスを難易度に応じた目標数まで削除します。
 - **メモモード**: 各マスに対して候補数字を記録できます。正解入力時には周囲の関連するメモが自動的にクリーンアップされます。
+
+## セットアップと機密情報の管理
+
+本プロジェクトでは、機密情報（広告IDや署名鍵など）を GitHub で管理しない構成をとっています。クローン後は以下の設定ファイルを各自作成してください。
+
+### 1. 広告設定 (`secrets.json`)
+AdMob のアプリIDや広告ユニットIDを一括管理します。
+- **場所**: プロジェクトルート直下
+- **作成方法**: `secrets.json.example` をコピーして `secrets.json` を作成し、本番用のIDを記入してください。
+- **実行・ビルド**:
+  ```bash
+  flutter run --dart-define-from-file=secrets.json
+  ```
+
+### 2. Android 署名設定 (`android/key.properties`)
+Google Play リリース用の署名情報を管理します。
+- **場所**: `android/` ディレクトリ内
+- **作成方法**: `android/key.properties.example` をコピーして `android/key.properties` を作成し、パスワードと鍵ファイルのパス（`/Users/nt/gitSrc/sudoku.jks` 等）を記入してください。
+
+## リリースビルドの作成
+
+Android App Bundle (`.aab`) を生成するには、以下のコマンドを実行します。
+
+```bash
+flutter build appbundle --release --dart-define-from-file=secrets.json
+```
+
+---
+

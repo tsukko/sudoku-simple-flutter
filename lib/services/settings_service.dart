@@ -6,6 +6,8 @@ class SettingsService {
   static const String _unlockAllKey = 'setting_unlock_all';
   static const String _vibrationEnabledKey = 'setting_vibration_enabled';
   static const String _bgmEnabledKey = 'setting_bgm_enabled';
+  static const String _seEnabledKey = 'setting_se_enabled';
+  static const String _highlightEnabledKey = 'setting_highlight_enabled';
 
   // BGM設定
   static Future<bool> isBgmEnabled() async {
@@ -16,6 +18,28 @@ class SettingsService {
   static Future<void> setBgmEnabled(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_bgmEnabledKey, value);
+  }
+
+  // 効果音設定
+  static Future<bool> isSeEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_seEnabledKey) ?? true;
+  }
+
+  static Future<void> setSeEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_seEnabledKey, value);
+  }
+
+  // 強調表示設定
+  static Future<bool> isHighlightEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_highlightEnabledKey) ?? true;
+  }
+
+  static Future<void> setHighlightEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_highlightEnabledKey, value);
   }
 
   // バイブレーション設定

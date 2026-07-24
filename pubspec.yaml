@@ -31,11 +31,12 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
-  shared_preferences: ^2.4.0
+  cupertino_icons: ^1.0.9
+  shared_preferences: ^2.5.5
   vibration: ^3.2.0
   device_info_plus: ^13.2.0
-  audioplayers: ^6.1.0
+  audioplayers: ^6.8.1
+  google_mobile_ads: ^9.0.0
   package_config: ^3.0.0
 
 dev_dependencies:

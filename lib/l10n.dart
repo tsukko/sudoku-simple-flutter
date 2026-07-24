@@ -51,6 +51,14 @@ class L10n {
   static String get nextLevel => isJapanese ? '次のレベルへ' : 'Next Level';
   static String get nextRandom => isJapanese ? '次のランダム問題へ' : 'Next Random';
   static String get back => isJapanese ? '戻る' : 'Back';
+  
+  // Ad-related
+  static String get rewardHintTitle => isJapanese ? 'ヒント補充' : 'Get More Hints';
+  static String get rewardHintMsg => isJapanese ? '動画広告を視聴して、ヒントを3つ補充しますか？' : 'Watch a video to get 3 more hints?';
+  static String get rewardLifeTitle => isJapanese ? 'ライフ回復' : 'Recover Life';
+  static String get rewardLifeMsg => isJapanese ? '動画広告を視聴して、ライフを全回復して継続しますか？' : 'Watch a video to fully recover life and continue?';
+  static String get watchAd => isJapanese ? '動画を見る' : 'Watch Video';
+  static String get adFailed => isJapanese ? '広告の読み込みに失敗しました' : 'Failed to load advertisement';
 
   // Level Selection
   static String get startNew => isJapanese ? '最初からスタート' : 'Start New';
@@ -65,6 +73,21 @@ class L10n {
   static String get vibrationSub => isJapanese ? 'ミスした時に端末を振動させます' : 'Vibrate on errors';
   static String get unlimited => isJapanese ? '無制限' : 'Unlimited';
   static String get times => isJapanese ? '回' : 'times';
+
+  static String get soundSettings => isJapanese ? 'サウンド設定' : 'Sound Settings';
+  static String get bgm => isJapanese ? 'BGM' : 'BGM';
+  static String get se => isJapanese ? '効果音' : 'Sound Effects';
+  static String get gameDisplaySettings => isJapanese ? 'ゲーム表示設定' : 'Display Settings';
+  static String get highlightSameNumbers => isJapanese ? '同じ数字を強調表示' : 'Highlight same numbers';
+  static String get highlightSameNumbersSub => isJapanese ? '選択中のマスと同じ数字に色をつけて見やすくします' : 'Highlight other cells with the same number';
+  static String get appInfo => isJapanese ? 'アプリ情報' : 'App Information';
+  static String get version => isJapanese ? 'バージョン' : 'Version';
+  static String get license => isJapanese ? 'ライセンス情報' : 'Licenses';
+  static String get dataManagement => isJapanese ? 'データ管理' : 'Data Management';
+  static String get resetAllData => isJapanese ? 'すべてのデータをリセット' : 'Reset all progress';
+  static String get resetAllDataConfirm => isJapanese ? 'これまでの経験値やレベルの進行状況がすべて消去されます。よろしいですか？' : 'This will erase all your XP and level progress. Are you sure?';
+  static String get resetCompleted => isJapanese ? 'データをリセットしました' : 'Data reset completed';
+  static String get developerSettings => isJapanese ? '開発者向け設定 (Debugのみ)' : 'Developer Settings (Debug only)';
 
   // Ranks
   static String get rankLabel => isJapanese ? '段位' : 'Rank';

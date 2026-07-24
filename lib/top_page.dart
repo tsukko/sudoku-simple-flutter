@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'level_selection_page.dart';
 import 'sudoku_page.dart';
 import 'settings_page.dart';
 import 'utils/sudoku_generator.dart';
 import 'services/game_service.dart';
+import 'services/ad_service.dart';
 import 'l10n.dart';
 
 class TopPage extends StatefulWidget {
@@ -17,6 +19,8 @@ class TopPage extends StatefulWidget {
 class _TopPageState extends State<TopPage> {
   int _xp = 0;
   String _rank = L10n.rank10;
+  BannerAd? _bannerAd;
+  bool _isBannerLoaded = false;
 
   // 和風カラーパレット
   static const Color tokiwa = Color(0xFF2D5A27); // 常盤色
@@ -27,6 +31,24 @@ class _TopPageState extends State<TopPage> {
   void initState() {
     super.initState();
     _loadProgress();
+    _initBannerAd();
+  }
+
+  void _initBannerAd() {
+    _bannerAd = AdService.createBannerAd()
+      ..load().then((_) {
+        if (mounted) {
+          setState(() {
+            _isBannerLoaded = true;
+          });
+        }
+      });
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
   }
 
   Future<void> _loadProgress() async {
@@ -106,6 +128,13 @@ class _TopPageState extends State<TopPage> {
           ],
         ),
       ),
+      bottomNavigationBar: _isBannerLoaded && _bannerAd != null
+          ? SizedBox(
+              height: _bannerAd!.size.height.toDouble(),
+              width: _bannerAd!.size.width.toDouble(),
+              child: AdWidget(ad: _bannerAd!),
+            )
+          : null,
     );
   }
 

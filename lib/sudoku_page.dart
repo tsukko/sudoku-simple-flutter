@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'models/sudoku_level.dart';
 import 'services/game_service.dart';
 import 'services/settings_service.dart';
+import 'services/ad_service.dart';
 import 'data/sudoku_data.dart';
 import 'l10n.dart';
 
@@ -38,6 +39,8 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
   bool _isLoading = true;
   bool _vibrationEnabled = true;
   bool _bgmEnabled = true;
+  bool _seEnabled = true;
+  bool _highlightEnabled = true;
   bool _isNoteMode = false;
 
   late AnimationController _shakeController;
@@ -91,6 +94,8 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     final lifeLimit = await SettingsService.getLifeLimit();
     final vibration = await SettingsService.isVibrationEnabled();
     final bgm = await SettingsService.isBgmEnabled();
+    final se = await SettingsService.isSeEnabled();
+    final highlight = await SettingsService.isHighlightEnabled();
 
     setState(() {
       _initialGrid = widget.level.initialGrid;
@@ -99,6 +104,8 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
       _initialHintLimit = hintLimit;
       _vibrationEnabled = vibration;
       _bgmEnabled = bgm;
+      _seEnabled = se;
+      _highlightEnabled = highlight;
 
       if (widget.savedProgress != null) {
         _currentGrid = widget.savedProgress!['grid'];
@@ -272,7 +279,13 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
   }
 
   void _useHint() {
-    if (_isGameOver || (_initialHintLimit != 0 && _hintCount <= 0)) return;
+    if (_isGameOver) return;
+    
+    // ヒント切れの場合にリワード広告を提示
+    if (_initialHintLimit != 0 && _hintCount <= 0) {
+      _showRewardHintDialog();
+      return;
+    }
 
     Point<int>? target;
 
@@ -360,6 +373,50 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     _autoSave();
   }
 
+  void _showRewardHintDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: washi,
+        title: Text(L10n.rewardHintTitle, style: const TextStyle(color: tokiwa, fontWeight: FontWeight.bold)),
+        content: Text(L10n.rewardHintMsg),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.cancel, style: const TextStyle(color: kurumi))),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _playRewardedAd(
+                adUnitId: AdService.rewardHintAdUnitId,
+                onRewarded: () {
+                  setState(() {
+                    _hintCount += 3;
+                  });
+                  _autoSave();
+                },
+              );
+            },
+            icon: const Icon(Icons.play_circle_fill),
+            label: Text(L10n.watchAd),
+            style: ElevatedButton.styleFrom(backgroundColor: tokiwa, foregroundColor: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _playRewardedAd({required String adUnitId, required VoidCallback onRewarded}) {
+    // 読み込み中表示などの処理をここに入れても良い
+    AdService.showRewardedAd(
+      adUnitId: adUnitId,
+      onRewardEarned: (reward) {
+        onRewarded();
+      },
+      onClosed: () {
+        // 必要に応じて処理
+      },
+    );
+  }
+
   void _resetLevel() {
     showDialog(
       context: context,
@@ -414,7 +471,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     _bgmPlayer.stop();
 
     // 効果音の再生
-    if (_bgmEnabled) {
+    if (_seEnabled) {
       await _effectPlayer.play(AssetSource(isWin ? 'sounds/clear.mp3' : 'sounds/gameover.mp3'));
     }
 
@@ -458,19 +515,43 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                         onPressed: () {
                           // ダイアログを閉じる
                           Navigator.pop(context);
-                          if (widget.level.id != 0 && widget.level.id < sudokuLevels.length) {
-                            // 呼び出し元の LevelSelectionPage に次のレベルIDを返し、自身の画面は終了する
-                            Navigator.pop(context, {'nextLevelId': widget.level.id + 1});
-                          } else if (widget.level.id == 0) {
-                            // ランダムモードの場合は、呼び出し元にランダム継続（nextLevelId: 0）を返して終了する
-                            Navigator.pop(context, {'nextLevelId': 0, 'difficulty': widget.level.difficulty});
-                          } else {
-                            // 最終レベルの場合は、普通にレベル選択画面に戻る
-                            Navigator.pop(context);
-                          }
+                          
+                          // 広告を表示してから次のレベルへ
+                          AdService.showInterstitialAd(
+                            onComplete: () {
+                              if (widget.level.id != 0 && widget.level.id < sudokuLevels.length) {
+                                Navigator.pop(context, {'nextLevelId': widget.level.id + 1});
+                              } else if (widget.level.id == 0) {
+                                Navigator.pop(context, {'nextLevelId': 0, 'difficulty': widget.level.difficulty});
+                              } else {
+                                Navigator.pop(context);
+                              }
+                            },
+                          );
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: tokiwa, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 45)),
                         child: Text(widget.level.id != 0 ? L10n.nextLevel : L10n.nextRandom),
+                      )
+                    else
+                      // ゲームオーバー時のライフ回復オプション
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _playRewardedAd(
+                            adUnitId: AdService.rewardLifeAdUnitId,
+                            onRewarded: () {
+                              setState(() {
+                                _isGameOver = false;
+                                _errorCount = 0; // 全回復
+                              });
+                              _startTimer();
+                              _autoSave();
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.favorite),
+                        label: Text(L10n.rewardLifeTitle),
+                        style: ElevatedButton.styleFrom(backgroundColor: enji, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 45)),
                       ),
                     const SizedBox(height: 10),
                     TextButton(
@@ -547,12 +628,23 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
             itemBuilder: (context, index) {
               int r = index ~/ 9, c = index % 9, val = _currentGrid[r][c];
               bool isInitial = _initialGrid[r][c] != 0, isSelected = _selectedRow == r && _selectedCol == c;
+              
+              // 強調表示の判定
+              bool isHighlighted = false;
+              if (_highlightEnabled && _selectedRow != null && _selectedCol != null) {
+                int selectedVal = _currentGrid[_selectedRow!][_selectedCol!];
+                if (selectedVal != 0 && val == selectedVal && !isSelected) {
+                  isHighlighted = true;
+                }
+              }
 
               return GestureDetector(
                 onTap: () => _onCellTap(r, c),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? tokiwa.withValues(alpha: 0.15) : Colors.transparent,
+                    color: isSelected 
+                        ? tokiwa.withValues(alpha: 0.15) 
+                        : (isHighlighted ? tokiwa.withValues(alpha: 0.05) : Colors.transparent),
                     border: Border(
                       bottom: r == 8 
                           ? BorderSide.none 
@@ -616,7 +708,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
   Widget _buildStatusBar() {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      color: Colors.white.withOpacity(0.5),
+      color: Colors.white.withValues(alpha: 0.5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

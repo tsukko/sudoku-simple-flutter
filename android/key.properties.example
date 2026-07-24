@@ -1,0 +1,4 @@
+storePassword=your_password_here
+keyPassword=your_password_here
+keyAlias=upload
+storeFile=/Users/nt/gitSrc/sudoku.jks
