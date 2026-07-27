@@ -8,10 +8,10 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val keystorePropertiesFile = rootProject.file("key.properties")
+val keystorePropertiesFile = File(rootProject.projectDir, "key.properties")
 val keystoreProperties = Properties()
 if (keystorePropertiesFile.exists()) {
-    keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 // secrets.json から AdMob アプリIDを読み込む
@@ -69,7 +69,17 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            // key.properties があり、かつ必要な項目が揃っている場合のみ release 署名を使う
+            val isSigningConfigReady = keystoreProperties.containsKey("keyAlias") && 
+                                      keystoreProperties.containsKey("keyPassword") && 
+                                      keystoreProperties.containsKey("storePassword") && 
+                                      keystoreProperties.containsKey("storeFile")
+            
+            signingConfig = if (isSigningConfigReady) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

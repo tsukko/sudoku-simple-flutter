@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'ad_service.dart';
 import '../l10n.dart';
 
 class GameService {
@@ -9,6 +10,7 @@ class GameService {
 
   // XPを取得
   static Future<int> getTotalXp() async {
+    if (AdService.isScreenshotMode) return 2500; // スクショモード用: 九段相当
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_totalXpKey) ?? 0;
   }
@@ -33,6 +35,7 @@ class GameService {
 
   // 解放されている最大レベルを取得 (デフォルトは1)
   static Future<int> getUnlockedLevel() async {
+    if (AdService.isScreenshotMode) return 50; // スクショモード用: レベル50まで解放
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_unlockedLevelKey) ?? 1;
   }

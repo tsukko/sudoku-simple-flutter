@@ -5,6 +5,7 @@ import 'sudoku_page.dart';
 import 'services/game_service.dart';
 import 'services/settings_service.dart';
 import 'services/ad_service.dart';
+import 'utils/sudoku_generator.dart';
 import 'models/sudoku_level.dart';
 import 'l10n.dart';
 
@@ -91,13 +92,13 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
         ),
-        itemCount: sudokuLevels.length,
+        itemCount: sudokuLevelConfigs.length,
         itemBuilder: (context, index) {
-          final level = sudokuLevels[index];
-          bool isLocked = !_unlockAll && level.id > _unlockedLevel;
+          final config = sudokuLevelConfigs[index];
+          bool isLocked = !_unlockAll && config.id > _unlockedLevel;
 
           return ElevatedButton(
-            onPressed: isLocked ? null : () => _handleLevelTap(context, level),
+            onPressed: isLocked ? null : () => _handleLevelTap(context, config),
             style: ElevatedButton.styleFrom(
               backgroundColor: isLocked ? Colors.grey[300] : Colors.white,
               foregroundColor: tokiwa,
@@ -115,7 +116,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('${L10n.levelLabel} ${level.id}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                      Text('${L10n.levelLabel} ${config.id}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       if (isLocked) ...[
                         const SizedBox(width: 8),
                         const Icon(Icons.lock, size: 20, color: kurumi),
@@ -123,7 +124,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                     ],
                   ),
                 ),
-                Text(_getDifficultyName(level.difficulty), style: TextStyle(fontSize: 14, color: isLocked ? Colors.grey : kurumi)),
+                Text(_getDifficultyName(config.difficulty), style: TextStyle(fontSize: 14, color: isLocked ? Colors.grey : kurumi)),
               ],
             ),
           );
@@ -139,9 +140,17 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     );
   }
 
-  Future<void> _handleLevelTap(BuildContext context, SudokuLevel level) async {
-    final progress = await GameService.loadProgress(level.id);
+  Future<void> _handleLevelTap(BuildContext context, LevelConfig config) async {
+    final progress = await GameService.loadProgress(config.id);
     if (!mounted) return;
+    
+    // タップされた瞬間にレベルを生成
+    final level = SudokuGenerator.generateRandomLevel(
+      id: config.id, 
+      difficulty: config.difficulty,
+      seed: config.id,
+    );
+
     if (progress == null) {
       _startGame(this.context, level, null);
     } else {
@@ -211,9 +220,16 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
       // 戻り値に `nextLevelId` が指定されている場合は、続けて次のレベルを自動起動する
       if (result != null && result.containsKey('nextLevelId')) {
         final int nextId = result['nextLevelId'] as int;
-        if (nextId > 0 && nextId <= sudokuLevels.length) {
-          // 次のレベルのインスタンスを特定
-          final nextLevel = sudokuLevels.firstWhere((lvl) => lvl.id == nextId);
+        if (nextId > 0 && nextId <= sudokuLevelConfigs.length) {
+          // 次のレベルの難易度を取得
+          final difficulty = getDifficultyById(nextId);
+          
+          // 次のレベルをオンデマンドで生成
+          final nextLevel = SudokuGenerator.generateRandomLevel(
+            id: nextId, 
+            difficulty: difficulty,
+            seed: nextId,
+          );
           
           // 次のレベルの中断データがあるか確認
           final saved = await GameService.loadProgress(nextId);

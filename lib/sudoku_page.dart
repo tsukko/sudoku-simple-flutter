@@ -519,7 +519,7 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                           // 広告を表示してから次のレベルへ
                           AdService.showInterstitialAd(
                             onComplete: () {
-                              if (widget.level.id != 0 && widget.level.id < sudokuLevels.length) {
+                              if (widget.level.id != 0 && widget.level.id < sudokuLevelConfigs.length) {
                                 Navigator.pop(context, {'nextLevelId': widget.level.id + 1});
                               } else if (widget.level.id == 0) {
                                 Navigator.pop(context, {'nextLevelId': 0, 'difficulty': widget.level.difficulty});
