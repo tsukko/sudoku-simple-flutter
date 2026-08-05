@@ -49,9 +49,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "ic_launcher"
   ios: true
-  image_path: "assets/image/icon.png"
-  adaptive_icon_background: "assets/image/icon_background.png"
-  adaptive_icon_foreground: "assets/image/icon_foreground.png"
+  image_path: "store_assets/icon.png"
+  adaptive_icon_background: "store_assets/icon_background.png"
+  adaptive_icon_foreground: "store_assets/icon_foreground.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
