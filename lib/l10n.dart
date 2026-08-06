@@ -59,6 +59,11 @@ class L10n {
   static String get rewardLifeMsg => isJapanese ? '動画広告を視聴して、ライフを全回復して継続しますか？' : 'Watch a video to fully recover life and continue?';
   static String get watchAd => isJapanese ? '動画を見る' : 'Watch Video';
   static String get adFailed => isJapanese ? '広告の読み込みに失敗しました' : 'Failed to load advertisement';
+  static String get adErrorTitle => isJapanese ? '広告エラー' : 'Ad Error';
+  static String get adErrorMsg => isJapanese ? '広告の読み込みに失敗しました。時間をおいて再度お試しください。' : 'Failed to load advertisement. Please try again later.';
+  static String get noInternetTitle => isJapanese ? '接続エラー' : 'Connection Error';
+  static String get noInternetMsg => isJapanese ? '次のステージに進むにはインターネット接続を有効にしてください。' : 'Please enable internet connection to proceed to the next stage.';
+  static String get close => isJapanese ? '閉じる' : 'Close';
 
   // Level Selection
   static String get startNew => isJapanese ? '最初からスタート' : 'Start New';

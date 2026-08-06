@@ -46,7 +46,6 @@ app.*.map.json
 
 # Secrets
 secrets.json
-android/key.properties
 *.jks
 *.keystore
 
