@@ -62,7 +62,7 @@ class AdService {
 
   // --- インタースティシャル広告のロードと表示 ---
 
-  static void showInterstitialAd({required VoidCallback onComplete}) {
+  static void showInterstitialAd({required VoidCallback onComplete, VoidCallback? onFailed}) {
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
       request: const AdRequest(),
@@ -82,7 +82,11 @@ class AdService {
         },
         onAdFailedToLoad: (error) {
           debugPrint('InterstitialAd failed to load: $error');
-          onComplete();
+          if (onFailed != null) {
+            onFailed();
+          } else {
+            onComplete();
+          }
         },
       ),
     );
@@ -94,6 +98,7 @@ class AdService {
     required String adUnitId,
     required Function(RewardItem) onRewardEarned,
     required VoidCallback onClosed,
+    VoidCallback? onFailed,
   }) {
     RewardedAd.load(
       adUnitId: adUnitId,
@@ -114,7 +119,11 @@ class AdService {
         },
         onAdFailedToLoad: (error) {
           debugPrint('RewardedAd failed to load: $error');
-          onClosed();
+          if (onFailed != null) {
+            onFailed();
+          } else {
+            onClosed();
+          }
         },
       ),
     );
