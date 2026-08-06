@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:vibration/vibration.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'models/sudoku_level.dart';
 import 'services/game_service.dart';
 import 'services/settings_service.dart';
@@ -404,7 +405,11 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
     );
   }
 
-  void _playRewardedAd({required String adUnitId, required VoidCallback onRewarded}) {
+  void _playRewardedAd({
+    required String adUnitId, 
+    required VoidCallback onRewarded,
+    VoidCallback? onFailed,
+  }) {
     // 読み込み中表示などの処理をここに入れても良い
     AdService.showRewardedAd(
       adUnitId: adUnitId,
@@ -414,7 +419,59 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
       onClosed: () {
         // 必要に応じて処理
       },
+      onFailed: onFailed ?? () {
+        _showAdErrorDialog();
+      },
     );
+  }
+
+  void _showAdErrorDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: washi,
+        title: Text(L10n.adErrorTitle, style: const TextStyle(color: enji, fontWeight: FontWeight.bold)),
+        content: Text(L10n.adErrorMsg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(L10n.close, style: const TextStyle(color: tokiwa)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNoInternetDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: washi,
+        title: Text(L10n.noInternetTitle, style: const TextStyle(color: enji, fontWeight: FontWeight.bold)),
+        content: Text(L10n.noInternetMsg),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(L10n.close, style: const TextStyle(color: tokiwa)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _shouldShowInterstitial(int levelId) {
+    if (levelId == 0) return true; // ランダムプレイは毎回
+    
+    if (levelId <= 20) {
+      // 1-20: 5レベルごと (5, 10, 15, 20)
+      return levelId % 5 == 0;
+    } else if (levelId <= 40) {
+      // 21-40: 2レベルごと (22, 24, ..., 40)
+      return levelId % 2 == 0;
+    } else {
+      // 41以降: 毎回
+      return true;
+    }
   }
 
   void _resetLevel() {
@@ -512,22 +569,34 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                   children: [
                     if (isWin)
                       ElevatedButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          // 条件に合致する場合、まずインターネット接続を確認
+                          if (_shouldShowInterstitial(widget.level.id)) {
+                            final List<ConnectivityResult> connectivityResult = await Connectivity().checkConnectivity();
+                            if (connectivityResult.contains(ConnectivityResult.none)) {
+                              _showNoInternetDialog();
+                              return;
+                            }
+                          }
+
                           // ダイアログを閉じる
+                          if (!context.mounted) return;
                           Navigator.pop(context);
                           
-                          // 広告を表示してから次のレベルへ
-                          AdService.showInterstitialAd(
-                            onComplete: () {
-                              if (widget.level.id != 0 && widget.level.id < sudokuLevelConfigs.length) {
-                                Navigator.pop(context, {'nextLevelId': widget.level.id + 1});
-                              } else if (widget.level.id == 0) {
-                                Navigator.pop(context, {'nextLevelId': 0, 'difficulty': widget.level.difficulty});
-                              } else {
-                                Navigator.pop(context);
-                              }
-                            },
-                          );
+                          // 条件に合致する場合のみ広告を表示
+                          if (_shouldShowInterstitial(widget.level.id)) {
+                            AdService.showInterstitialAd(
+                              onComplete: () {
+                                _goToNextLevel();
+                              },
+                              onFailed: () {
+                                // 失敗時も次のレベルへ進ませる（ユーザー体験優先）
+                                _goToNextLevel();
+                              },
+                            );
+                          } else {
+                            _goToNextLevel();
+                          }
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: tokiwa, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 45)),
                         child: Text(widget.level.id != 0 ? L10n.nextLevel : L10n.nextRandom),
@@ -546,6 +615,9 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
                               });
                               _startTimer();
                               _autoSave();
+                            },
+                            onFailed: () {
+                              _showAdErrorDialog();
                             },
                           );
                         },
@@ -569,6 +641,16 @@ class _SudokuPageState extends State<SudokuPage> with TickerProviderStateMixin, 
         );
       },
     );
+  }
+
+  void _goToNextLevel() {
+    if (widget.level.id != 0 && widget.level.id < sudokuLevelConfigs.length) {
+      Navigator.pop(context, {'nextLevelId': widget.level.id + 1});
+    } else if (widget.level.id == 0) {
+      Navigator.pop(context, {'nextLevelId': 0, 'difficulty': widget.level.difficulty});
+    } else {
+      Navigator.pop(context);
+    }
   }
 
   @override
