@@ -61,6 +61,16 @@ flutter build appbundle --release --dart-define-from-file=secrets.json
 flutter build apk --release --dart-define-from-file=secrets.json
 ```
 
+## スクリーンショット撮影モード
+
+ストア掲載用のスクリーンショットを撮るために、XPを偽装し、広告を非表示にして起動することができます。
+```bash
+flutter run --dart-define=ZEN_SUDOKU_SCREENSHOT_MODE=true
+```
+- **XP**: 2500（九段相当）に固定されます。
+- **レベル**: 50まで解放された状態になります。
+- **広告**: 一切表示されません。
+
 ## アイコンの更新と管理 (`store_assets/`)
 
 アプリアイコンの元データや、ストア掲載用の画像素材は `store_assets/` ディレクトリで管理しています。

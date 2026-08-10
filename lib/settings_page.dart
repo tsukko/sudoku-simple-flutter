@@ -1,8 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'services/settings_service.dart';
 import 'services/game_service.dart';
+import 'theme/app_colors.dart';
+import 'widgets/zen_app_bar.dart';
+import 'main.dart';
 import 'l10n.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -13,57 +15,48 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  int _hintLimit = 3;
-  int _lifeLimit = 5;
-  bool _unlockAll = false;
-  bool _vibrationEnabled = true;
-  bool _bgmEnabled = true;
-  bool _seEnabled = true;
-  bool _highlightEnabled = true;
-  String _appVersion = 'unknown';
+  late int _hintLimit;
+  late int _lifeLimit;
+  late bool _unlockAll;
+  late bool _vibrationEnabled;
+  late bool _bgmEnabled;
+  late bool _seEnabled;
+  late bool _highlightEnabled;
+  late String _appVersion;
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
+    // 同期的に初期値をセット
+    _hintLimit = SettingsService.hintLimitSync;
+    _lifeLimit = SettingsService.lifeLimitSync;
+    _unlockAll = SettingsService.isUnlockAllSync;
+    _vibrationEnabled = SettingsService.isVibrationEnabledSync;
+    _bgmEnabled = SettingsService.isBgmEnabledSync;
+    _seEnabled = SettingsService.isSeEnabledSync;
+    _highlightEnabled = SettingsService.isHighlightEnabledSync;
+    _appVersion = AppConfig.version;
   }
 
-  Future<void> _loadSettings() async {
-    final hint = await SettingsService.getHintLimit();
-    final life = await SettingsService.getLifeLimit();
-    final unlock = await SettingsService.isUnlockAll();
-    final vibration = await SettingsService.isVibrationEnabled();
-    final bgm = await SettingsService.isBgmEnabled();
-    final se = await SettingsService.isSeEnabled();
-    final highlight = await SettingsService.isHighlightEnabled();
-    final packageInfo = await PackageInfo.fromPlatform();
-
+  void _syncSettings() {
     if (mounted) {
       setState(() {
-        _hintLimit = hint;
-        _lifeLimit = life;
-        _unlockAll = unlock;
-        _vibrationEnabled = vibration;
-        _bgmEnabled = bgm;
-        _seEnabled = se;
-        _highlightEnabled = highlight;
-        _appVersion = packageInfo.version;
+        _hintLimit = SettingsService.hintLimitSync;
+        _lifeLimit = SettingsService.lifeLimitSync;
+        _unlockAll = SettingsService.isUnlockAllSync;
+        _vibrationEnabled = SettingsService.isVibrationEnabledSync;
+        _bgmEnabled = SettingsService.isBgmEnabledSync;
+        _seEnabled = SettingsService.isSeEnabledSync;
+        _highlightEnabled = SettingsService.isHighlightEnabledSync;
       });
     }
   }
 
-  // 和風カラーパレット
-  static const Color tokiwa = Color(0xFF2D5A27); // 常盤色
-  static const Color kurumi = Color(0xFF5D4037); // 胡桃色
-  static const Color enji = Color(0xFFB22D35);   // 臙脂
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.settings, style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: tokiwa,
-        foregroundColor: Colors.white,
+      appBar: ZenAppBar(
+        title: Text(L10n.settings),
       ),
       body: ListView(
         children: [
@@ -74,7 +67,7 @@ class _SettingsPageState extends State<SettingsPage> {
             value: _vibrationEnabled,
             onChanged: (val) async {
               await SettingsService.setVibrationEnabled(val);
-              _loadSettings();
+              _syncSettings();
             },
           ),
           _buildSwitchTile(
@@ -82,7 +75,7 @@ class _SettingsPageState extends State<SettingsPage> {
             value: _bgmEnabled,
             onChanged: (val) async {
               await SettingsService.setBgmEnabled(val);
-              _loadSettings();
+              _syncSettings();
             },
           ),
           _buildSwitchTile(
@@ -90,7 +83,7 @@ class _SettingsPageState extends State<SettingsPage> {
             value: _seEnabled,
             onChanged: (val) async {
               await SettingsService.setSeEnabled(val);
-              _loadSettings();
+              _syncSettings();
             },
           ),
 
@@ -101,7 +94,7 @@ class _SettingsPageState extends State<SettingsPage> {
             value: _highlightEnabled,
             onChanged: (val) async {
               await SettingsService.setHighlightEnabled(val);
-              _loadSettings();
+              _syncSettings();
             },
           ),
 
@@ -124,11 +117,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
           _buildSectionHeader(L10n.dataManagement),
           ListTile(
-            title: Text(L10n.resetAllData, style: const TextStyle(color: enji, fontWeight: FontWeight.bold)),
+            title: Text(L10n.resetAllData, style: const TextStyle(color: AppColors.enji, fontWeight: FontWeight.bold)),
             onTap: _showResetConfirmDialog,
           ),
 
-          // デバッグモード時のみ表示
           if (kDebugMode) ...[
             _buildSectionHeader(L10n.developerSettings, color: Colors.orange[800]),
             ListTile(
@@ -143,7 +135,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 onChanged: (val) async {
                   if (val != null) {
                     await SettingsService.setHintLimit(val);
-                    _loadSettings();
+                    _syncSettings();
                   }
                 },
               ),
@@ -160,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 onChanged: (val) async {
                   if (val != null) {
                     await SettingsService.setLifeLimit(val);
-                    _loadSettings();
+                    _syncSettings();
                   }
                 },
               ),
@@ -171,7 +163,7 @@ class _SettingsPageState extends State<SettingsPage> {
               value: _unlockAll,
               onChanged: (val) async {
                 await SettingsService.setUnlockAll(val);
-                _loadSettings();
+                _syncSettings();
               },
             ),
           ],
@@ -187,7 +179,7 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Text(
         title,
         style: TextStyle(
-          color: color ?? tokiwa,
+          color: color ?? AppColors.tokiwa,
           fontWeight: FontWeight.bold,
           fontSize: 14,
         ),
@@ -206,7 +198,7 @@ class _SettingsPageState extends State<SettingsPage> {
       subtitle: subtitle != null ? Text(subtitle, style: const TextStyle(fontSize: 12)) : null,
       value: value,
       onChanged: onChanged,
-      activeThumbColor: tokiwa,
+      activeThumbColor: AppColors.tokiwa,
     );
   }
 
@@ -214,10 +206,11 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(L10n.resetAllData, style: const TextStyle(color: enji, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.washi,
+        title: Text(L10n.resetAllData, style: const TextStyle(color: AppColors.enji, fontWeight: FontWeight.bold)),
         content: Text(L10n.resetAllDataConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.cancel, style: const TextStyle(color: kurumi))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(L10n.cancel, style: const TextStyle(color: AppColors.kurumi))),
           TextButton(
             onPressed: () async {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -228,12 +221,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 SnackBar(content: Text(L10n.resetCompleted)),
               );
               
-              navigator.pop(); // ダイアログを閉じる
-              if (mounted) {
-                _loadSettings();
-              }
+              navigator.pop();
+              _syncSettings();
             },
-            child: Text(L10n.reset, style: const TextStyle(color: enji)),
+            child: Text(L10n.reset, style: const TextStyle(color: AppColors.enji)),
           ),
         ],
       ),

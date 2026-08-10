@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'data/sudoku_data.dart';
 import 'sudoku_page.dart';
 import 'services/game_service.dart';
 import 'services/settings_service.dart';
-import 'services/ad_service.dart';
 import 'utils/sudoku_generator.dart';
 import 'models/sudoku_level.dart';
+import 'theme/app_colors.dart';
+import 'widgets/zen_app_bar.dart';
+import 'widgets/banner_ad_widget.dart';
 import 'l10n.dart';
 
 class LevelSelectionPage extends StatefulWidget {
@@ -19,47 +20,20 @@ class LevelSelectionPage extends StatefulWidget {
 class _LevelSelectionPageState extends State<LevelSelectionPage> {
   int _unlockedLevel = 1;
   bool _unlockAll = false;
-  bool _isLoading = true;
-  BannerAd? _bannerAd;
-  bool _isBannerLoaded = false;
-
-  // 和風カラーパレット
-  static const Color tokiwa = Color(0xFF2D5A27); // 常盤色
-  static const Color kurumi = Color(0xFF5D4037); // 胡桃色
-  static const Color washi = Color(0xFFF7F1E3);  // 和紙
 
   @override
   void initState() {
     super.initState();
-    _loadData();
-    _initBannerAd();
+    // 同期的に初期値をセット
+    _unlockedLevel = GameService.unlockedLevelSync;
+    _unlockAll = SettingsService.isUnlockAllSync;
   }
 
-  void _initBannerAd() {
-    _bannerAd = AdService.createBannerAd()
-      ..load().then((_) {
-        if (mounted) {
-          setState(() {
-            _isBannerLoaded = true;
-          });
-        }
-      });
-  }
-
-  @override
-  void dispose() {
-    _bannerAd?.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadData() async {
-    final level = await GameService.getUnlockedLevel();
-    final unlockAll = await SettingsService.isUnlockAll();
+  void _refreshData() {
     if (mounted) {
       setState(() {
-        _unlockedLevel = level;
-        _unlockAll = unlockAll;
-        _isLoading = false;
+        _unlockedLevel = GameService.unlockedLevelSync;
+        _unlockAll = SettingsService.isUnlockAllSync;
       });
     }
   }
@@ -75,14 +49,9 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) return const Scaffold(backgroundColor: washi, body: Center(child: CircularProgressIndicator(color: tokiwa)));
-
     return Scaffold(
-      backgroundColor: washi,
-      appBar: AppBar(
-        title: Text(L10n.levelSelect, style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: tokiwa,
-        foregroundColor: Colors.white,
+      appBar: ZenAppBar(
+        title: Text(L10n.levelSelect),
       ),
       body: GridView.builder(
         padding: const EdgeInsets.all(20),
@@ -101,11 +70,11 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
             onPressed: isLocked ? null : () => _handleLevelTap(context, config),
             style: ElevatedButton.styleFrom(
               backgroundColor: isLocked ? Colors.grey[300] : Colors.white,
-              foregroundColor: tokiwa,
+              foregroundColor: AppColors.tokiwa,
               elevation: isLocked ? 0 : 3,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
-                side: BorderSide(color: isLocked ? Colors.transparent : tokiwa.withValues(alpha: 0.5)),
+                side: BorderSide(color: isLocked ? Colors.transparent : AppColors.tokiwa.withValues(alpha: 0.5)),
               ),
             ),
             child: Column(
@@ -119,24 +88,18 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
                       Text('${L10n.levelLabel} ${config.id}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                       if (isLocked) ...[
                         const SizedBox(width: 8),
-                        const Icon(Icons.lock, size: 20, color: kurumi),
+                        const Icon(Icons.lock, size: 20, color: AppColors.kurumi),
                       ]
                     ],
                   ),
                 ),
-                Text(_getDifficultyName(config.difficulty), style: TextStyle(fontSize: 14, color: isLocked ? Colors.grey : kurumi)),
+                Text(_getDifficultyName(config.difficulty), style: TextStyle(fontSize: 14, color: isLocked ? Colors.grey : AppColors.kurumi)),
               ],
             ),
           );
         },
       ),
-      bottomNavigationBar: _isBannerLoaded && _bannerAd != null
-          ? SizedBox(
-              height: _bannerAd!.size.height.toDouble(),
-              width: _bannerAd!.size.width.toDouble(),
-              child: AdWidget(ad: _bannerAd!),
-            )
-          : null,
+      bottomNavigationBar: const BannerAdWidget(),
     );
   }
 
@@ -144,7 +107,6 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
     final progress = await GameService.loadProgress(config.id);
     if (!mounted) return;
     
-    // タップされた瞬間にレベルを生成
     final level = SudokuGenerator.generateRandomLevel(
       id: config.id, 
       difficulty: config.difficulty,
@@ -161,17 +123,17 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
   void _showStartOptions(BuildContext context, SudokuLevel level, Map<String, dynamic> progress) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: washi,
+      backgroundColor: AppColors.washi,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('${L10n.levelLabel} ${level.id}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: tokiwa)),
+            Text('${L10n.levelLabel} ${level.id}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.tokiwa)),
             const SizedBox(height: 20),
             ListTile(
-              leading: const Icon(Icons.play_arrow, color: tokiwa),
+              leading: const Icon(Icons.play_arrow, color: AppColors.tokiwa),
               title: Text(L10n.startNew, style: const TextStyle(fontWeight: FontWeight.bold)),
               onTap: () async {
                 Navigator.pop(context);
@@ -181,7 +143,7 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.restore, color: kurumi),
+              leading: const Icon(Icons.restore, color: AppColors.kurumi),
               title: Text(L10n.resume, style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text('${L10n.time}: ${_formatTime(progress['seconds'])}'),
               onTap: () {
@@ -214,33 +176,24 @@ class _LevelSelectionPageState extends State<LevelSelectionPage> {
         ),
       );
 
-      // 画面から戻ってきた直後にデータを再読み込み
-      await _loadData();
+      _refreshData();
 
-      // 戻り値に `nextLevelId` が指定されている場合は、続けて次のレベルを自動起動する
       if (result != null && result.containsKey('nextLevelId')) {
         final int nextId = result['nextLevelId'] as int;
         if (nextId > 0 && nextId <= sudokuLevelConfigs.length) {
-          // 次のレベルの難易度を取得
           final difficulty = getDifficultyById(nextId);
-          
-          // 次のレベルをオンデマンドで生成
           final nextLevel = SudokuGenerator.generateRandomLevel(
             id: nextId, 
             difficulty: difficulty,
             seed: nextId,
           );
-          
-          // 次のレベルの中断データがあるか確認
           final saved = await GameService.loadProgress(nextId);
-          
           currentLevel = nextLevel;
           progress = saved;
         } else {
           currentLevel = null;
         }
       } else {
-        // 次のレベルへの自動遷移指示がない場合はループを抜ける
         currentLevel = null;
       }
     }

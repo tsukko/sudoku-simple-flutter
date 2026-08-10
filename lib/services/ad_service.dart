@@ -3,7 +3,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdService {
   // --- 広告ユニットIDの管理 ---
-  static const bool isScreenshotMode = false;
+  static const bool isScreenshotMode = bool.fromEnvironment('ZEN_SUDOKU_SCREENSHOT_MODE');
   
   static String get bannerAdUnitId {
     if (isScreenshotMode) return '';

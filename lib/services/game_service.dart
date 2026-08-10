@@ -4,20 +4,37 @@ import 'ad_service.dart';
 import '../l10n.dart';
 
 class GameService {
+  static SharedPreferences? _prefs;
+
   static const String _unlockedLevelKey = 'unlocked_level';
   static const String _progressPrefix = 'progress_';
   static const String _totalXpKey = 'total_xp';
 
+  static Future<void> init() async {
+    _prefs ??= await SharedPreferences.getInstance();
+  }
+
+  static SharedPreferences get prefs {
+    if (_prefs == null) {
+      throw Exception('GameService not initialized. Call init() first.');
+    }
+    return _prefs!;
+  }
+
+  // 同期取得用ゲッター
+  static int get totalXpSync => prefs.getInt(_totalXpKey) ?? 0;
+  static int get unlockedLevelSync => prefs.getInt(_unlockedLevelKey) ?? 1;
+
   // XPを取得
   static Future<int> getTotalXp() async {
     if (AdService.isScreenshotMode) return 2500; // スクショモード用: 九段相当
-    final prefs = await SharedPreferences.getInstance();
+    await init();
     return prefs.getInt(_totalXpKey) ?? 0;
   }
 
   // XPを加算
   static Future<void> addXp(int amount) async {
-    final prefs = await SharedPreferences.getInstance();
+    await init();
     int currentXp = await getTotalXp();
     await prefs.setInt(_totalXpKey, currentXp + amount);
   }
@@ -36,13 +53,13 @@ class GameService {
   // 解放されている最大レベルを取得 (デフォルトは1)
   static Future<int> getUnlockedLevel() async {
     if (AdService.isScreenshotMode) return 50; // スクショモード用: レベル50まで解放
-    final prefs = await SharedPreferences.getInstance();
+    await init();
     return prefs.getInt(_unlockedLevelKey) ?? 1;
   }
 
   // レベルを解放する
   static Future<void> unlockLevel(int levelId) async {
-    final prefs = await SharedPreferences.getInstance();
+    await init();
     int currentUnlocked = await getUnlockedLevel();
     if (levelId > currentUnlocked) {
       await prefs.setInt(_unlockedLevelKey, levelId);
@@ -58,7 +75,7 @@ class GameService {
     required int secondsElapsed,
     required int hintCount,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
+    await init();
     
     // SetをListに変換してからシリアライズ
     final serializedNotes = notesGrid.map((row) => row.map((set) => set.toList()).toList()).toList();
@@ -75,7 +92,7 @@ class GameService {
 
   // 進捗をロードする
   static Future<Map<String, dynamic>?> loadProgress(int levelId) async {
-    final prefs = await SharedPreferences.getInstance();
+    await init();
     String? json = prefs.getString('$_progressPrefix$levelId');
     if (json == null) return null;
     
@@ -101,13 +118,13 @@ class GameService {
 
   // 進捗を削除する (クリア時や最初から始める時)
   static Future<void> clearProgress(int levelId) async {
-    final prefs = await SharedPreferences.getInstance();
+    await init();
     await prefs.remove('$_progressPrefix$levelId');
   }
 
   // すべてのデータをリセットする
   static Future<void> resetAllData() async {
-    final prefs = await SharedPreferences.getInstance();
+    await init();
     // 全キーをループして削除（またはシンプルに全クリア、ただし他の設定まで消える可能性に注意）
     // 今回は数独の進行状況に関連するプレフィックスがついたものとXPを消す
     final keys = prefs.getKeys();
