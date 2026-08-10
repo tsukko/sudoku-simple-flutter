@@ -1,6 +1,9 @@
-# Flutter Proguard Rules
+# Keep members of the generated BuildContext/R classes if necessary
+-keep class **.R$* {
+    <fields>;
+}
 
-# Standard Flutter rules
+# Flutter rules
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.** { *; }
 -keep class io.flutter.util.** { *; }
@@ -8,22 +11,20 @@
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
 
-# AdMob / Google Mobile Ads specific rules (if needed, though usually included in the library)
--keep public class com.google.android.gms.ads.** {
-   public *;
+# AdMob
+-keep public class com.google.android.gms.ads.** { public *; }
+-keep public class com.google.ads.** { public *; }
+
+# Prevent R8 from stripping away native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
 }
 
-# Keep members of the generated BuildContext/R classes if necessary
--keep class **.R$* {
-    <fields>;
-}
-
-# Play Core Library rules (to fix R8 errors about missing classes)
+# Common ProGuard settings for Flutter plugins
 -dontwarn com.google.android.play.core.**
-
-# Additional Flutter/Android rules
 -dontwarn javax.annotation.**
 -dontwarn org.checkerframework.**
 -dontwarn com.google.errorprone.annotations.**
+
 
 

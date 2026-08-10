@@ -53,10 +53,12 @@ class _TopPageState extends State<TopPage> {
 
   Future<void> _loadProgress() async {
     final xp = await GameService.getTotalXp();
-    setState(() {
-      _xp = xp;
-      _rank = GameService.getRank(xp);
-    });
+    if (mounted) {
+      setState(() {
+        _xp = xp;
+        _rank = GameService.getRank(xp);
+      });
+    }
   }
 
   @override

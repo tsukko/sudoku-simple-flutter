@@ -63,6 +63,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".deb"
+        }
         release {
             // secrets.json があり、かつ必要な署名項目が揃っている場合のみ release 署名を使う
             val isSigningConfigReady = secretsJson.containsKey("ZEN_SUDOKU_ANDROID_KEY_ALIAS") && 
@@ -77,7 +80,7 @@ android {
             }
 
             isMinifyEnabled = true
-            isShrinkResources = true
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

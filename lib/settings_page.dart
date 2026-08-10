@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'services/settings_service.dart';
 import 'services/game_service.dart';
 import 'l10n.dart';
@@ -19,6 +20,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _bgmEnabled = true;
   bool _seEnabled = true;
   bool _highlightEnabled = true;
+  String _appVersion = 'unknown';
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
     final bgm = await SettingsService.isBgmEnabled();
     final se = await SettingsService.isSeEnabled();
     final highlight = await SettingsService.isHighlightEnabled();
+    final packageInfo = await PackageInfo.fromPlatform();
 
     if (mounted) {
       setState(() {
@@ -44,6 +47,7 @@ class _SettingsPageState extends State<SettingsPage> {
         _bgmEnabled = bgm;
         _seEnabled = se;
         _highlightEnabled = highlight;
+        _appVersion = packageInfo.version;
       });
     }
   }
@@ -104,7 +108,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _buildSectionHeader(L10n.appInfo),
           ListTile(
             title: Text(L10n.version),
-            trailing: const Text('1.0.0', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            trailing: Text(_appVersion, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
           ),
           ListTile(
             title: Text(L10n.license),
@@ -113,7 +117,7 @@ class _SettingsPageState extends State<SettingsPage> {
               showLicensePage(
                 context: context,
                 applicationName: L10n.appTitle,
-                applicationVersion: '1.0.0',
+                applicationVersion: _appVersion,
               );
             },
           ),
@@ -217,11 +221,14 @@ class _SettingsPageState extends State<SettingsPage> {
           TextButton(
             onPressed: () async {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
-              Navigator.pop(context);
+              final navigator = Navigator.of(context);
+              
               await GameService.resetAllData();
               scaffoldMessenger.showSnackBar(
                 SnackBar(content: Text(L10n.resetCompleted)),
               );
+              
+              navigator.pop(); // ダイアログを閉じる
               if (mounted) {
                 _loadSettings();
               }

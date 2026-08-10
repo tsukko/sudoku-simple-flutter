@@ -47,23 +47,28 @@ AdMob のアプリID、広告ユニットID、および Android のリリース�
   flutter run --dart-define-from-file=secrets.json
   ```
 
-## リリースビルドの作成
+## リリース・テスト用ビルドの作成
 
-Android App Bundle (`.aab`) を生成するには、以下のコマンドを実行します。
-
+### 1. ストア登録用 (App Bundle)
+Google Play Console にアップロードするための `.aab` ファイルを生成します。
 ```bash
-  flutter build appbundle --release --dart-define-from-file=secrets.json
+flutter build appbundle --release --dart-define-from-file=secrets.json
 ```
 
-## プロジェクト構造と最適化
+### 2. 実機テスト用 (APK)
+実機に直接インストールして「本番と全く同じ挙動」を確認するための `.apk` ファイルを生成します。
+```bash
+flutter build apk --release --dart-define-from-file=secrets.json
+```
 
-### 1. アセットの管理 (`store_assets/`)
-アプリ内で直接使用しない巨大な元画像やストア掲載用素材は、ビルドサイズ削減のため `store_assets/` ディレクトリで管理しています。ここは Flutter のビルド対象（`assets/`）に含まれません。
+## アイコンの更新と管理 (`store_assets/`)
 
-### 2. アプリサイズの最適化
-リリースビルドでは以下の最適化が有効になっています：
-- **R8 Full Mode**: コードの強力な圧縮と最適化。
-- **Minify**: 未使用コードの削除と難読化。
-- **Resource Shrinking**: 使用されていないリソースファイルの自動削除。
+アプリアイコンの元データや、ストア掲載用の画像素材は `store_assets/` ディレクトリで管理しています。
+
+### アイコンを更新する方法
+`store_assets/` 内の画像を差し替えた後、以下のコマンドを実行することで、Android/iOS それぞれのプロジェクトにアイコンが自動反映されます。
+```bash
+dart run flutter_launcher_icons
+```
 
 ---

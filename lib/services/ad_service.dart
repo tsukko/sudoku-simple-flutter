@@ -6,7 +6,7 @@ class AdService {
   static const bool isScreenshotMode = false;
   
   static String get bannerAdUnitId {
-    if (isScreenshotMode) return ''; // スクショモードなら空を返す
+    if (isScreenshotMode) return '';
     if (kDebugMode) return 'ca-app-pub-3940256099942544/6300978111'; // Test ID
     return const String.fromEnvironment(
       'ZEN_SUDOKU_ADMOB_BANNER_ID',
@@ -15,6 +15,7 @@ class AdService {
   }
 
   static String get interstitialAdUnitId {
+    if (isScreenshotMode) return '';
     if (kDebugMode) return 'ca-app-pub-3940256099942544/1033173712'; // Test ID
     return const String.fromEnvironment(
       'ZEN_SUDOKU_ADMOB_INTERSTITIAL_ID',
@@ -23,6 +24,7 @@ class AdService {
   }
 
   static String get rewardHintAdUnitId {
+    if (isScreenshotMode) return '';
     if (kDebugMode) return 'ca-app-pub-3940256099942544/5224354917'; // Test ID
     return const String.fromEnvironment(
       'ZEN_SUDOKU_ADMOB_REWARD_HINT_ID',
@@ -31,6 +33,7 @@ class AdService {
   }
 
   static String get rewardLifeAdUnitId {
+    if (isScreenshotMode) return '';
     if (kDebugMode) return 'ca-app-pub-3940256099942544/5224354917'; // Test ID
     return const String.fromEnvironment(
       'ZEN_SUDOKU_ADMOB_REWARD_LIFE_ID',
@@ -61,7 +64,6 @@ class AdService {
   }
 
   // --- インタースティシャル広告のロードと表示 ---
-
   static void showInterstitialAd({required VoidCallback onComplete, VoidCallback? onFailed}) {
     InterstitialAd.load(
       adUnitId: interstitialAdUnitId,
